@@ -13,14 +13,19 @@
     },
     {
       "id": 2,
-      "email": "mentor@ajarka.com", 
+      "email": "mentor@ajarka.com",
       "password": "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi",
       "role": "mentor",
       "name": "John Doe",
       "avatar": "https://ui-avatars.com/api/?name=John+Doe&background=2e7d32&color=fff",
       "phone": "+6281234567891",
       "bio": "Experienced full-stack developer with 5+ years in React and Node.js",
-      "skills": ["React", "Node.js", "TypeScript", "PostgreSQL"],
+      "skills": [
+        "React",
+        "Node.js",
+        "TypeScript",
+        "PostgreSQL"
+      ],
       "rating": 4.8,
       "totalStudents": 45,
       "createdAt": "2024-01-02T00:00:00.000Z",
@@ -29,13 +34,16 @@
     {
       "id": 3,
       "email": "siswa@ajarka.com",
-      "password": "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", 
+      "password": "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi",
       "role": "siswa",
       "name": "Jane Smith",
       "avatar": "https://ui-avatars.com/api/?name=Jane+Smith&background=7b1fa2&color=fff",
       "phone": "+6281234567892",
       "level": "Beginner",
-      "interests": ["Frontend Development", "UI/UX Design"],
+      "interests": [
+        "Frontend Development",
+        "UI/UX Design"
+      ],
       "createdAt": "2024-01-03T00:00:00.000Z",
       "updatedAt": "2024-01-03T00:00:00.000Z"
     }
@@ -53,7 +61,7 @@
       "mentorId": 2,
       "syllabus": [
         "Introduction to React",
-        "Components and JSX", 
+        "Components and JSX",
         "State and Props",
         "Event Handling",
         "Hooks",
@@ -69,7 +77,7 @@
       "title": "Full-Stack Web Development",
       "description": "Complete full-stack development course with React, Node.js, and database integration",
       "price": 599000,
-      "duration": "12 weeks", 
+      "duration": "12 weeks",
       "level": "Intermediate",
       "category": "Full-Stack Development",
       "thumbnail": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&h=300&fit=crop",
@@ -106,7 +114,7 @@
       "id": 2,
       "userId": 3,
       "courseId": 2,
-      "mentorId": 2, 
+      "mentorId": 2,
       "amount": 599000,
       "status": "pending",
       "paymentMethod": "e_wallet",
@@ -144,14 +152,14 @@
       "icon": "🎨"
     },
     {
-      "id": 2, 
+      "id": 2,
       "name": "Backend Development",
       "description": "Master server-side development",
       "icon": "⚙️"
     },
     {
       "id": 3,
-      "name": "Full-Stack Development", 
+      "name": "Full-Stack Development",
       "description": "Complete web development stack",
       "icon": "🚀"
     },
@@ -173,7 +181,14 @@
       "level": "Beginner to Intermediate",
       "students": "2,150",
       "rating": 4.8,
-      "skills": ["HTML", "CSS", "JavaScript", "React", "Vue.js", "TypeScript"],
+      "skills": [
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "React",
+        "Vue.js",
+        "TypeScript"
+      ],
       "isActive": true,
       "createdAt": "2024-01-01T00:00:00.000Z"
     },
@@ -187,7 +202,14 @@
       "level": "Beginner to Advanced",
       "students": "1,890",
       "rating": 4.9,
-      "skills": ["Node.js", "Python", "Databases", "APIs", "Docker", "AWS"],
+      "skills": [
+        "Node.js",
+        "Python",
+        "Databases",
+        "APIs",
+        "Docker",
+        "AWS"
+      ],
       "isActive": true,
       "createdAt": "2024-01-01T00:00:00.000Z"
     },
@@ -201,7 +223,14 @@
       "level": "Intermediate to Advanced",
       "students": "3,420",
       "rating": 4.9,
-      "skills": ["React", "Node.js", "MongoDB", "Express", "Next.js", "TypeScript"],
+      "skills": [
+        "React",
+        "Node.js",
+        "MongoDB",
+        "Express",
+        "Next.js",
+        "TypeScript"
+      ],
       "isActive": true,
       "createdAt": "2024-01-01T00:00:00.000Z"
     },
@@ -215,7 +244,13 @@
       "level": "Beginner to Advanced",
       "students": "1,650",
       "rating": 4.7,
-      "skills": ["React Native", "Flutter", "Swift", "Kotlin", "Firebase"],
+      "skills": [
+        "React Native",
+        "Flutter",
+        "Swift",
+        "Kotlin",
+        "Firebase"
+      ],
       "isActive": true,
       "createdAt": "2024-01-01T00:00:00.000Z"
     },
@@ -229,7 +264,14 @@
       "level": "Intermediate to Advanced",
       "students": "890",
       "rating": 4.8,
-      "skills": ["AWS", "Docker", "Kubernetes", "CI/CD", "Linux", "Monitoring"],
+      "skills": [
+        "AWS",
+        "Docker",
+        "Kubernetes",
+        "CI/CD",
+        "Linux",
+        "Monitoring"
+      ],
       "isActive": false,
       "createdAt": "2024-01-01T00:00:00.000Z"
     },
@@ -243,9 +285,61 @@
       "level": "Beginner to Advanced",
       "students": "1,230",
       "rating": 4.6,
-      "skills": ["Python", "SQL", "Pandas", "Machine Learning", "Visualization"],
+      "skills": [
+        "Python",
+        "SQL",
+        "Pandas",
+        "Machine Learning",
+        "Visualization"
+      ],
       "isActive": false,
       "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "contact_messages": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "phone": "+62 812-3456-7890",
+      "category": "general",
+      "subject": "Pertanyaan tentang kursus",
+      "message": "Saya ingin tahu lebih detail tentang kursus Full-Stack Development",
+      "status": "new",
+      "createdAt": "2024-01-20T10:30:00.000Z"
+    },
+    {
+      "id": 2,
+      "name": "Jane Smith",
+      "email": "jane@example.com",
+      "phone": "+62 813-4567-8901",
+      "category": "technical",
+      "subject": "Masalah login",
+      "message": "Saya tidak bisa login ke dashboard setelah mendaftar",
+      "status": "in_progress",
+      "createdAt": "2024-01-21T14:15:00.000Z"
+    },
+    {
+      "id": "ca23",
+      "name": "Test User",
+      "email": "test@example.com",
+      "phone": "+62 812-1111-2222",
+      "category": "general",
+      "subject": "Test Form Submission",
+      "message": "This is a test message to verify the contact form is working properly.",
+      "status": "new",
+      "createdAt": "2025-01-24T10:00:00.000Z"
+    },
+    {
+      "id": "4637",
+      "name": "Final Test",
+      "email": "final@test.com",
+      "phone": "+62 812-9999-8888",
+      "category": "technical",
+      "subject": "Testing after bug fix",
+      "message": "Testing that the contact form still works after fixing the JSX parsing error.",
+      "status": "new",
+      "createdAt": "2025-08-24T21:33:32+07:00"
     }
   ]
 }
