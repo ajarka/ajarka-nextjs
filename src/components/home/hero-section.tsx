@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import Image from "next/image"
 import { ArrowRight, Code, Users, BookOpen } from "lucide-react"
 import { motion } from "framer-motion"
 
@@ -95,43 +96,45 @@ export function HeroSection() {
               </motion.div>
             </motion.div>
 
-            {/* Right Content - Illustration */}
+            {/* Right Content - Hero Image */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.4, duration: 0.8 }}
               className="relative"
             >
-              <div className="relative bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl p-8 shadow-2xl">
-                <div className="absolute inset-0 bg-white/20 rounded-3xl backdrop-blur-sm" />
-                <div className="relative z-10 space-y-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                      <Code className="h-6 w-6 text-white" />
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl">
+                <Image
+                  src="/assets/ImgHero.png"
+                  alt="Hero Ajarka - Learning Platform"
+                  width={600}
+                  height={400}
+                  className="w-full h-auto object-cover"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+                
+                {/* Overlay Content */}
+                <div className="absolute bottom-6 left-6 right-6">
+                  <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl p-4 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-500 rounded-lg">
+                        <Code className="h-4 w-4 text-white" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-sm">Interactive Learning</div>
+                        <div className="text-xs text-muted-foreground">Hands-on coding experience</div>
+                      </div>
                     </div>
-                    <div className="text-white">
-                      <div className="font-semibold">Interactive Learning</div>
-                      <div className="text-white/80 text-sm">Hands-on coding experience</div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                      <Users className="h-6 w-6 text-white" />
-                    </div>
-                    <div className="text-white">
-                      <div className="font-semibold">Personal Mentoring</div>
-                      <div className="text-white/80 text-sm">1-on-1 guidance from experts</div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                      <BookOpen className="h-6 w-6 text-white" />
-                    </div>
-                    <div className="text-white">
-                      <div className="font-semibold">Structured Curriculum</div>
-                      <div className="text-white/80 text-sm">Step-by-step learning path</div>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-500 rounded-lg">
+                        <Users className="h-4 w-4 text-white" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-sm">Personal Mentoring</div>
+                        <div className="text-xs text-muted-foreground">1-on-1 guidance from experts</div>
+                      </div>
                     </div>
                   </div>
                 </div>

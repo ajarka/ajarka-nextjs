@@ -161,5 +161,91 @@
       "description": "Build mobile applications",
       "icon": "📱"
     }
+  ],
+  "roadmaps": [
+    {
+      "id": "frontend",
+      "title": "Frontend Developer",
+      "description": "Menjadi ahli dalam pengembangan antarmuka pengguna yang interaktif",
+      "icon": "globe",
+      "color": "bg-blue-500",
+      "duration": "4-6 bulan",
+      "level": "Beginner to Intermediate",
+      "students": "2,150",
+      "rating": 4.8,
+      "skills": ["HTML", "CSS", "JavaScript", "React", "Vue.js", "TypeScript"],
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "backend",
+      "title": "Backend Developer",
+      "description": "Bangun sistem server yang robust dan scalable",
+      "icon": "server",
+      "color": "bg-green-500",
+      "duration": "5-7 bulan",
+      "level": "Beginner to Advanced",
+      "students": "1,890",
+      "rating": 4.9,
+      "skills": ["Node.js", "Python", "Databases", "APIs", "Docker", "AWS"],
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "fullstack",
+      "title": "Full-Stack Developer",
+      "description": "Kuasai pengembangan web dari frontend hingga backend",
+      "icon": "code",
+      "color": "bg-purple-500",
+      "duration": "8-12 bulan",
+      "level": "Intermediate to Advanced",
+      "students": "3,420",
+      "rating": 4.9,
+      "skills": ["React", "Node.js", "MongoDB", "Express", "Next.js", "TypeScript"],
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "mobile",
+      "title": "Mobile Developer",
+      "description": "Develop aplikasi mobile untuk iOS dan Android",
+      "icon": "smartphone",
+      "color": "bg-orange-500",
+      "duration": "6-8 bulan",
+      "level": "Beginner to Advanced",
+      "students": "1,650",
+      "rating": 4.7,
+      "skills": ["React Native", "Flutter", "Swift", "Kotlin", "Firebase"],
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "devops",
+      "title": "DevOps Engineer",
+      "description": "Otomatisasi deployment dan infrastruktur cloud",
+      "icon": "cloud",
+      "color": "bg-indigo-500",
+      "duration": "6-9 bulan",
+      "level": "Intermediate to Advanced",
+      "students": "890",
+      "rating": 4.8,
+      "skills": ["AWS", "Docker", "Kubernetes", "CI/CD", "Linux", "Monitoring"],
+      "isActive": false,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "data",
+      "title": "Data Scientist",
+      "description": "Analisis data dan machine learning untuk insights bisnis",
+      "icon": "database",
+      "color": "bg-pink-500",
+      "duration": "7-10 bulan",
+      "level": "Beginner to Advanced",
+      "students": "1,230",
+      "rating": 4.6,
+      "skills": ["Python", "SQL", "Pandas", "Machine Learning", "Visualization"],
+      "isActive": false,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    }
   ]
 }
