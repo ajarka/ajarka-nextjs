@@ -1,0 +1,165 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "admin@ajarka.com",
+      "password": "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi",
+      "role": "admin",
+      "name": "Super Admin",
+      "avatar": "https://ui-avatars.com/api/?name=Super+Admin&background=0d47a1&color=fff",
+      "phone": "+6281234567890",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "email": "mentor@ajarka.com", 
+      "password": "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi",
+      "role": "mentor",
+      "name": "John Doe",
+      "avatar": "https://ui-avatars.com/api/?name=John+Doe&background=2e7d32&color=fff",
+      "phone": "+6281234567891",
+      "bio": "Experienced full-stack developer with 5+ years in React and Node.js",
+      "skills": ["React", "Node.js", "TypeScript", "PostgreSQL"],
+      "rating": 4.8,
+      "totalStudents": 45,
+      "createdAt": "2024-01-02T00:00:00.000Z",
+      "updatedAt": "2024-01-02T00:00:00.000Z"
+    },
+    {
+      "id": 3,
+      "email": "siswa@ajarka.com",
+      "password": "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", 
+      "role": "siswa",
+      "name": "Jane Smith",
+      "avatar": "https://ui-avatars.com/api/?name=Jane+Smith&background=7b1fa2&color=fff",
+      "phone": "+6281234567892",
+      "level": "Beginner",
+      "interests": ["Frontend Development", "UI/UX Design"],
+      "createdAt": "2024-01-03T00:00:00.000Z",
+      "updatedAt": "2024-01-03T00:00:00.000Z"
+    }
+  ],
+  "courses": [
+    {
+      "id": 1,
+      "title": "React Development Fundamentals",
+      "description": "Learn React from scratch with hands-on projects and real-world examples",
+      "price": 299000,
+      "duration": "8 weeks",
+      "level": "Beginner",
+      "category": "Frontend Development",
+      "thumbnail": "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=500&h=300&fit=crop",
+      "mentorId": 2,
+      "syllabus": [
+        "Introduction to React",
+        "Components and JSX", 
+        "State and Props",
+        "Event Handling",
+        "Hooks",
+        "API Integration",
+        "Routing",
+        "Final Project"
+      ],
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "title": "Full-Stack Web Development",
+      "description": "Complete full-stack development course with React, Node.js, and database integration",
+      "price": 599000,
+      "duration": "12 weeks", 
+      "level": "Intermediate",
+      "category": "Full-Stack Development",
+      "thumbnail": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&h=300&fit=crop",
+      "mentorId": 2,
+      "syllabus": [
+        "Frontend with React",
+        "Backend with Node.js",
+        "Database Design",
+        "API Development",
+        "Authentication",
+        "Deployment",
+        "Testing",
+        "Capstone Project"
+      ],
+      "isActive": true,
+      "createdAt": "2024-01-05T00:00:00.000Z"
+    }
+  ],
+  "transactions": [
+    {
+      "id": 1,
+      "userId": 3,
+      "courseId": 1,
+      "mentorId": 2,
+      "amount": 299000,
+      "status": "completed",
+      "paymentMethod": "bank_transfer",
+      "paymentProof": "https://example.com/payment-proof-1.jpg",
+      "notes": "Pembayaran untuk kursus React Development",
+      "createdAt": "2024-01-15T00:00:00.000Z",
+      "updatedAt": "2024-01-16T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "userId": 3,
+      "courseId": 2,
+      "mentorId": 2, 
+      "amount": 599000,
+      "status": "pending",
+      "paymentMethod": "e_wallet",
+      "paymentProof": null,
+      "notes": "Menunggu konfirmasi pembayaran",
+      "createdAt": "2024-01-20T00:00:00.000Z",
+      "updatedAt": "2024-01-20T00:00:00.000Z"
+    }
+  ],
+  "comments": [
+    {
+      "id": 1,
+      "courseId": 1,
+      "userId": 3,
+      "mentorId": 2,
+      "rating": 5,
+      "comment": "Kursus yang sangat bagus! Mentor sangat sabar dan materi mudah dipahami.",
+      "createdAt": "2024-01-25T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "courseId": 1,
+      "userId": 3,
+      "mentorId": 2,
+      "rating": 4,
+      "comment": "Materinya lengkap, tapi bisa ditambahkan lebih banyak contoh praktis.",
+      "createdAt": "2024-01-26T00:00:00.000Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": 1,
+      "name": "Frontend Development",
+      "description": "Learn modern frontend technologies",
+      "icon": "🎨"
+    },
+    {
+      "id": 2, 
+      "name": "Backend Development",
+      "description": "Master server-side development",
+      "icon": "⚙️"
+    },
+    {
+      "id": 3,
+      "name": "Full-Stack Development", 
+      "description": "Complete web development stack",
+      "icon": "🚀"
+    },
+    {
+      "id": 4,
+      "name": "Mobile Development",
+      "description": "Build mobile applications",
+      "icon": "📱"
+    }
+  ]
+}
