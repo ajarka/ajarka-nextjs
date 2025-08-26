@@ -29,6 +29,7 @@ import { motion } from "framer-motion"
 import { format, addDays, startOfWeek } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import BookingCapacityMonitor from './booking-capacity-monitor'
+import MentorScheduleCalendar from './mentor-schedule-calendar'
 
 interface MentorSchedule {
   id?: number
@@ -71,6 +72,7 @@ const TIME_SLOTS = Array.from({ length: 24 }, (_, i) => {
 export default function MentorScheduleManager({ mentorId }: { mentorId: number }) {
   const [schedules, setSchedules] = useState<MentorSchedule[]>([])
   const [availabilities, setAvailabilities] = useState<AvailabilitySlot[]>([])
+  const [bookings, setBookings] = useState<any[]>([])
   const [activeSchedule, setActiveSchedule] = useState<MentorSchedule | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isAvailabilityOpen, setIsAvailabilityOpen] = useState(false)
@@ -110,6 +112,7 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
       if (schedulesData.length > 0) {
         setActiveSchedule(schedulesData[0])
         fetchAvailabilities(schedulesData[0].id)
+        fetchBookings()
       }
     } catch (error) {
       console.error('Error fetching schedules:', error)
@@ -125,6 +128,16 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
       setAvailabilities(availData)
     } catch (error) {
       console.error('Error fetching availabilities:', error)
+    }
+  }
+
+  const fetchBookings = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/bookings?mentorId=${mentorId}`)
+      const bookingsData = await response.json()
+      setBookings(bookingsData)
+    } catch (error) {
+      console.error('Error fetching bookings:', error)
     }
   }
 
@@ -164,7 +177,7 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
     }
   }
 
-  const addAvailability = async () => {
+  const addAvailability = async (availabilityData: any) => {
     if (!activeSchedule?.id) return
     
     setSaving(true)
@@ -173,26 +186,19 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...newAvailability,
+          ...availabilityData,
           mentorId,
-          scheduleId: activeSchedule.id,
+          isActive: true,
           createdAt: new Date().toISOString()
         })
       })
       
       if (response.ok) {
         await fetchAvailabilities(activeSchedule.id)
-        setNewAvailability({
-          dayOfWeek: 1,
-          startTime: '09:00',
-          endTime: '17:00',
-          isRecurring: true,
-          isActive: true
-        })
-        setIsAvailabilityOpen(false)
       }
     } catch (error) {
       console.error('Error adding availability:', error)
+      throw error
     } finally {
       setSaving(false)
     }
@@ -391,6 +397,7 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
           if (schedule) {
             setActiveSchedule(schedule)
             fetchAvailabilities(schedule.id!)
+            fetchBookings()
           }
         }}>
           <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${schedules.length}, 1fr)` }}>
@@ -447,156 +454,24 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
                 </CardContent>
               </Card>
 
-              {/* Availability Management */}
+              {/* Professional Schedule Calendar */}
               <Card>
                 <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <CardTitle>Ketersediaan Waktu</CardTitle>
-                      <CardDescription>
-                        Atur hari dan jam kapan Anda tersedia untuk mentoring
-                      </CardDescription>
-                    </div>
-                    
-                    <Dialog open={isAvailabilityOpen} onOpenChange={setIsAvailabilityOpen}>
-                      <DialogTrigger asChild>
-                        <Button size="sm" className="gap-2">
-                          <Plus className="h-4 w-4" />
-                          Tambah Slot
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Tambah Ketersediaan</DialogTitle>
-                          <DialogDescription>
-                            Tentukan hari dan jam ketersediaan Anda
-                          </DialogDescription>
-                        </DialogHeader>
-                        
-                        <div className="grid gap-4 py-4">
-                          <div className="space-y-2">
-                            <Label>Hari</Label>
-                            <Select 
-                              value={newAvailability.dayOfWeek.toString()} 
-                              onValueChange={(value) => setNewAvailability({ ...newAvailability, dayOfWeek: parseInt(value) })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {DAYS_OF_WEEK.map((day) => (
-                                  <SelectItem key={day.value} value={day.value.toString()}>
-                                    {day.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label>Jam Mulai</Label>
-                              <Select 
-                                value={newAvailability.startTime} 
-                                onValueChange={(value) => setNewAvailability({ ...newAvailability, startTime: value })}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {TIME_SLOTS.map((time) => (
-                                    <SelectItem key={time.value} value={time.value}>
-                                      {time.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Jam Selesai</Label>
-                              <Select 
-                                value={newAvailability.endTime} 
-                                onValueChange={(value) => setNewAvailability({ ...newAvailability, endTime: value })}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {TIME_SLOTS.map((time) => (
-                                    <SelectItem key={time.value} value={time.value}>
-                                      {time.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                        </div>
-
-                        <DialogFooter>
-                          <Button variant="outline" onClick={() => setIsAvailabilityOpen(false)}>
-                            Batal
-                          </Button>
-                          <Button onClick={addAvailability} disabled={saving}>
-                            {saving ? (
-                              <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                                Menyimpan...
-                              </>
-                            ) : (
-                              'Tambah Slot'
-                            )}
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
+                  <CardTitle>Schedule Calendar</CardTitle>
+                  <CardDescription>
+                    Manage your availability using the professional calendar interface
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {availabilities.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Clock className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-muted-foreground">
-                        Belum ada ketersediaan waktu yang diatur
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid gap-3">
-                      {availabilities
-                        .filter(avail => avail.isActive)
-                        .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
-                        .map((availability) => (
-                          <motion.div
-                            key={availability.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex items-center justify-between p-3 border rounded-lg"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-2 h-2 bg-green-500 rounded-full" />
-                              <span className="font-medium">
-                                {DAYS_OF_WEEK.find(d => d.value === availability.dayOfWeek)?.label}
-                              </span>
-                              <span className="text-muted-foreground">
-                                {availability.startTime} - {availability.endTime}
-                              </span>
-                              {availability.isRecurring && (
-                                <Badge variant="outline" className="text-xs">
-                                  Berulang
-                                </Badge>
-                              )}
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteAvailability(availability.id!)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </motion.div>
-                        ))}
-                    </div>
-                  )}
+                  <MentorScheduleCalendar
+                    scheduleId={activeSchedule.id!}
+                    mentorId={mentorId}
+                    availabilities={availabilities.filter(a => a.scheduleId === activeSchedule.id)}
+                    bookings={bookings.filter(b => b.scheduleId === activeSchedule.id)}
+                    onAddAvailability={addAvailability}
+                    onDeleteAvailability={deleteAvailability}
+                    schedule={activeSchedule}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>

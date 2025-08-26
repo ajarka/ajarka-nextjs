@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Calendar } from "@/components/ui/calendar"
+import ProfessionalCalendar from "@/components/ui/professional-calendar"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { 
   Clock, 
@@ -151,19 +151,21 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
   }
 
   const calculateAvailableDates = () => {
-    if (!selectedSchedule) return
+    if (!selectedSchedule) {
+      return
+    }
 
     const dates: Date[] = []
     const today = startOfDay(new Date())
     
-    // Calculate available dates for the next 30 days
-    for (let i = 0; i < 30; i++) {
+    // Calculate available dates for the next 60 days
+    for (let i = 0; i < 60; i++) {
       const checkDate = addDays(today, i)
       const dayOfWeek = checkDate.getDay()
       
       // Check if mentor has availability on this day of week for this schedule
       const hasAvailability = availabilities.some(avail => 
-        avail.scheduleId === selectedSchedule.id &&
+        avail.scheduleId === parseInt(selectedSchedule.id.toString()) &&
         avail.dayOfWeek === dayOfWeek &&
         avail.isActive
       )
@@ -174,6 +176,67 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
     }
     
     setAvailableDates(dates)
+  }
+
+  const getDateAvailabilityStatus = (date: Date) => {
+    if (!selectedSchedule) return { status: 'unavailable', availableSlots: 0, totalSlots: 0 }
+    
+    const dayOfWeek = date.getDay()
+    const dateString = format(date, 'yyyy-MM-dd')
+    
+    // Get availability slots for this day and schedule
+    const relevantAvailabilities = availabilities.filter(
+      avail => avail.scheduleId === selectedSchedule.id && 
+      avail.dayOfWeek === dayOfWeek &&
+      avail.isActive
+    )
+
+    if (relevantAvailabilities.length === 0) {
+      return { status: 'unavailable', availableSlots: 0, totalSlots: 0 }
+    }
+
+    let totalSlots = 0
+    let availableSlots = 0
+
+    relevantAvailabilities.forEach(availability => {
+      const [startHour, startMinute] = availability.startTime.split(':').map(Number)
+      const [endHour, endMinute] = availability.endTime.split(':').map(Number)
+      
+      const slotDuration = selectedSchedule.duration
+      let currentTime = setMinutes(setHours(new Date(), startHour), startMinute)
+      const endTime = setMinutes(setHours(new Date(), endHour), endMinute)
+      
+      while (currentTime < endTime) {
+        const slotEnd = addMinutes(currentTime, slotDuration)
+        if (slotEnd <= endTime) {
+          const timeString = format(currentTime, 'HH:mm')
+          
+          // Check if this time slot is already at capacity
+          const existingBookings = bookings.filter(booking => {
+            if (booking.scheduleId !== selectedSchedule.id || booking.status === 'cancelled') {
+              return false
+            }
+            
+            const bookingDate = new Date(booking.bookingDate)
+            return format(bookingDate, 'yyyy-MM-dd') === dateString && 
+                   format(bookingDate, 'HH:mm') === timeString
+          })
+          
+          totalSlots += selectedSchedule.maxCapacity
+          const currentBookings = existingBookings.length
+          availableSlots += Math.max(0, selectedSchedule.maxCapacity - currentBookings)
+        }
+        currentTime = addMinutes(currentTime, slotDuration)
+      }
+    })
+
+    if (availableSlots === 0) {
+      return { status: 'full', availableSlots: 0, totalSlots }
+    } else if (availableSlots === totalSlots) {
+      return { status: 'available', availableSlots, totalSlots }
+    } else {
+      return { status: 'partial', availableSlots, totalSlots }
+    }
   }
 
   const calculateAvailableTimeSlots = () => {
@@ -337,6 +400,99 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
     )
   }
 
+  const getCalendarEvents = () => {
+    if (!selectedSchedule) return []
+    
+    const events: any[] = []
+    
+    // Create events for available time slots
+    availableDates.forEach(date => {
+      const dayOfWeek = date.getDay()
+      const relevantAvailabilities = availabilities.filter(
+        avail => avail.scheduleId === selectedSchedule.id && 
+        avail.dayOfWeek === dayOfWeek &&
+        avail.isActive
+      )
+
+      relevantAvailabilities.forEach(availability => {
+        const [startHour, startMinute] = availability.startTime.split(':').map(Number)
+        const [endHour, endMinute] = availability.endTime.split(':').map(Number)
+        
+        let currentTime = new Date(date)
+        currentTime.setHours(startHour, startMinute, 0, 0)
+        
+        const endTime = new Date(date)
+        endTime.setHours(endHour, endMinute, 0, 0)
+        
+        while (currentTime < endTime) {
+          const slotEnd = addMinutes(currentTime, selectedSchedule.duration)
+          if (slotEnd <= endTime) {
+            const dateString = format(date, 'yyyy-MM-dd')
+            const timeString = format(currentTime, 'HH:mm')
+            
+            // Check existing bookings for this slot
+            const existingBookings = bookings.filter(booking => {
+              if (booking.scheduleId !== selectedSchedule.id || booking.status === 'cancelled') {
+                return false
+              }
+              
+              const bookingDate = new Date(booking.bookingDate)
+              return format(bookingDate, 'yyyy-MM-dd') === dateString && 
+                     format(bookingDate, 'HH:mm') === timeString
+            })
+            
+            const currentBookings = existingBookings.length
+            const isAvailable = currentBookings < selectedSchedule.maxCapacity
+            
+            events.push({
+              id: `${selectedSchedule.id}-${dateString}-${timeString}`,
+              title: isAvailable ? 
+                `${timeString} (${selectedSchedule.maxCapacity - currentBookings} spots left)` :
+                `${timeString} (Full)`,
+              start: new Date(currentTime),
+              end: new Date(slotEnd),
+              resource: {
+                type: isAvailable ? 'available' : 'booked',
+                capacity: selectedSchedule.maxCapacity,
+                currentBookings: currentBookings,
+                price: selectedSchedule.price,
+                mentorName: selectedMentor?.name,
+                timeSlot: timeString,
+                date: dateString
+              }
+            })
+          }
+          currentTime = addMinutes(currentTime, selectedSchedule.duration)
+        }
+      })
+    })
+    
+    return events
+  }
+
+  const handleCalendarSlotSelect = (slotInfo: { start: Date; end: Date }) => {
+    const slotDate = startOfDay(slotInfo.start)
+    const isAvailable = isDateAvailable(slotDate)
+    
+    if (isAvailable) {
+      setBookingForm(prev => ({
+        ...prev,
+        selectedDate: slotDate,
+        selectedTime: format(slotInfo.start, 'HH:mm')
+      }))
+    }
+  }
+
+  const handleCalendarEventSelect = (event: any) => {
+    if (event.resource?.type === 'available') {
+      setBookingForm(prev => ({
+        ...prev,
+        selectedDate: startOfDay(event.start),
+        selectedTime: event.resource.timeSlot
+      }))
+    }
+  }
+
   const filteredMentors = mentors.filter(mentor =>
     mentor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     mentor.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -376,7 +532,7 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
       {/* Mentors Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredMentors.map((mentor, index) => {
-          const mentorSchedules = schedules.filter(s => s.mentorId === mentor.id)
+          const mentorSchedules = schedules.filter(s => s.mentorId === parseInt(mentor.id.toString()))
           
           return (
             <motion.div
@@ -478,138 +634,255 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
 
       {/* Enhanced Booking Dialog */}
       <Dialog open={showBookingDialog} onOpenChange={setShowBookingDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Book Session with {selectedMentor?.name}</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+            <DialogTitle className="text-xl">Book Session with {selectedMentor?.name}</DialogTitle>
+            <DialogDescription className="text-base">
               {selectedSchedule?.title} - {selectedSchedule?.duration} minutes
             </DialogDescription>
           </DialogHeader>
           
-          <div className="grid gap-6 py-4">
-            {/* Session Details */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>{selectedSchedule?.duration} minutes</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span>Max {selectedSchedule?.maxCapacity} people</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    <span>Rp {selectedSchedule?.price.toLocaleString('id-ID')}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {selectedSchedule?.meetingType === 'online' ? 
-                      <Video className="h-4 w-4 text-muted-foreground" /> : 
-                      <Globe className="h-4 w-4 text-muted-foreground" />
-                    }
-                    <span className="capitalize">{selectedSchedule?.meetingType}</span>
-                  </div>
+          <div className="flex-1 overflow-y-auto min-h-0 p-6">
+            {/* Session Info Bar */}
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-blue-600" />
+                  <span className="font-medium">{selectedSchedule?.duration} min</span>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Enhanced Date Selection */}
-            <div>
-              <Label className="text-sm font-medium flex items-center gap-2 mb-3">
-                <CalendarDays className="h-4 w-4" />
-                Select Date
-              </Label>
-              <div className="border rounded-lg p-4 bg-muted/5">
-                <Calendar
-                  mode="single"
-                  selected={bookingForm.selectedDate || undefined}
-                  onSelect={handleDateSelect}
-                  disabled={(date) => {
-                    const today = startOfDay(new Date())
-                    return date < today || !isDateAvailable(date)
-                  }}
-                  modifiers={{
-                    available: availableDates,
-                  }}
-                  modifiersStyles={{
-                    available: {
-                      backgroundColor: 'hsl(var(--primary))',
-                      color: 'hsl(var(--primary-foreground))',
-                      fontWeight: 'bold',
-                    }
-                  }}
-                  className="rounded-md border-0"
-                />
-                <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-primary rounded-full"></div>
-                    <span>Available dates</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-muted rounded-full"></div>
-                    <span>Unavailable</span>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-blue-600" />
+                  <span className="font-medium">Max {selectedSchedule?.maxCapacity}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-blue-600" />
+                  <span className="font-medium">Rp {selectedSchedule?.price.toLocaleString('id-ID')}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {selectedSchedule?.meetingType === 'online' ? 
+                    <Video className="h-4 w-4 text-blue-600" /> : 
+                    <Globe className="h-4 w-4 text-blue-600" />
+                  }
+                  <span className="font-medium capitalize">{selectedSchedule?.meetingType}</span>
                 </div>
               </div>
             </div>
 
-            {/* Time Selection */}
-            {bookingForm.selectedDate && availableTimeSlots.length > 0 && (
-              <div>
-                <Label className="text-sm font-medium flex items-center gap-2 mb-3">
-                  <Clock className="h-4 w-4" />
-                  Select Time - {getDateLabel(bookingForm.selectedDate)}
-                </Label>
-                <div className="grid grid-cols-4 gap-2">
-                  {availableTimeSlots.map((time) => (
+            {/* Date Selection */}
+            <div className="mb-6">
+              <Label className="text-base font-semibold mb-3 flex items-center gap-2">
+                <CalendarDays className="h-5 w-5" />
+                Step 1: Select Date
+              </Label>
+              
+              {/* Availability Legend */}
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg border">
+                <div className="flex flex-wrap gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                    </div>
+                    <span>Available</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                    </div>
+                    <span>Partially Booked</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                      <div className="w-1 h-1 bg-white rounded-full"></div>
+                    </div>
+                    <span>Fully Booked</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {availableDates.slice(0, 15).map((date) => {
+                  const isSelected = bookingForm.selectedDate && 
+                    format(date, 'yyyy-MM-dd') === format(bookingForm.selectedDate, 'yyyy-MM-dd')
+                  const availability = getDateAvailabilityStatus(date)
+                  
+                  // Define colors and styles based on availability
+                  const getStatusStyle = (status: string, selected: boolean) => {
+                    if (selected) return 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600'
+                    
+                    switch (status) {
+                      case 'available':
+                        return 'border-green-300 bg-green-50 hover:bg-green-100 text-green-800'
+                      case 'partial':
+                        return 'border-orange-300 bg-orange-50 hover:bg-orange-100 text-orange-800'
+                      case 'full':
+                        return 'border-red-300 bg-red-50 hover:bg-red-100 text-red-800 opacity-75'
+                      default:
+                        return 'border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-500'
+                    }
+                  }
+
+                  const getStatusIndicator = (status: string) => {
+                    switch (status) {
+                      case 'available':
+                        return <div className="w-2 h-2 bg-green-500 rounded-full absolute top-1 right-1"></div>
+                      case 'partial':
+                        return <div className="w-2 h-2 bg-orange-500 rounded-full absolute top-1 right-1"></div>
+                      case 'full':
+                        return <div className="w-2 h-2 bg-red-500 rounded-full absolute top-1 right-1"></div>
+                      default:
+                        return null
+                    }
+                  }
+                  
+                  return (
                     <Button
-                      key={time}
-                      variant={bookingForm.selectedTime === time ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleTimeSelect(time)}
-                      className="h-10"
+                      key={format(date, 'yyyy-MM-dd')}
+                      variant="outline"
+                      className={`h-auto py-3 px-2 flex flex-col gap-1 relative transition-all duration-200 ${
+                        getStatusStyle(availability.status, isSelected)
+                      }`}
+                      onClick={() => handleDateSelect(date)}
+                      disabled={availability.status === 'full'}
                     >
-                      {time}
+                      {getStatusIndicator(availability.status)}
+                      <span className="text-xs font-medium">
+                        {format(date, 'MMM', { locale: localeId })}
+                      </span>
+                      <span className="text-lg font-bold">
+                        {format(date, 'd')}
+                      </span>
+                      <span className="text-xs">
+                        {format(date, 'EEE', { locale: localeId })}
+                      </span>
+                      {availability.status !== 'unavailable' && (
+                        <span className="text-xs font-medium mt-1">
+                          {availability.availableSlots}/{availability.totalSlots} slots
+                        </span>
+                      )}
                     </Button>
-                  ))}
+                  )
+                })}
+              </div>
+              {availableDates.length > 15 && (
+                <p className="text-sm text-muted-foreground mt-2 text-center">
+                  Showing first 15 available dates
+                </p>
+              )}
+            </div>
+
+            {/* Time Selection */}
+            {bookingForm.selectedDate && (
+              <div className="mb-6">
+                <Label className="text-base font-semibold mb-3 flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Step 2: Select Time
+                </Label>
+                {availableTimeSlots.length > 0 ? (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                    {availableTimeSlots.map((time) => {
+                      const isSelected = bookingForm.selectedTime === time
+                      
+                      // Get booking info for this time slot
+                      const dateString = format(bookingForm.selectedDate!, 'yyyy-MM-dd')
+                      const existingBookings = bookings.filter(booking => {
+                        if (booking.scheduleId !== selectedSchedule!.id || booking.status === 'cancelled') {
+                          return false
+                        }
+                        
+                        const bookingDate = new Date(booking.bookingDate)
+                        return format(bookingDate, 'yyyy-MM-dd') === dateString && 
+                               format(bookingDate, 'HH:mm') === time
+                      })
+                      
+                      const maxCapacity = selectedSchedule?.maxCapacity || 1
+                      const currentBookings = existingBookings.length
+                      const availableSpots = Math.max(0, maxCapacity - currentBookings)
+                      const isNearlyFull = availableSpots <= 1 && availableSpots > 0
+                      
+                      return (
+                        <Button
+                          key={time}
+                          variant={isSelected ? "default" : "outline"}
+                          className={`py-3 px-2 h-auto flex flex-col gap-1 relative transition-all duration-200 ${
+                            isSelected 
+                              ? 'bg-green-600 hover:bg-green-700 text-white' 
+                              : isNearlyFull
+                              ? 'border-orange-300 bg-orange-50 hover:bg-orange-100 text-orange-800'
+                              : 'border-green-300 bg-green-50 hover:bg-green-100 text-green-800'
+                          }`}
+                          onClick={() => handleTimeSelect(time)}
+                        >
+                          {/* Status indicator dot */}
+                          {!isSelected && (
+                            <div className={`w-2 h-2 rounded-full absolute top-1 right-1 ${
+                              isNearlyFull ? 'bg-orange-500' : 'bg-green-500'
+                            }`}></div>
+                          )}
+                          
+                          <span className="font-semibold">{time}</span>
+                          <span className="text-xs">
+                            {availableSpots} spot{availableSpots !== 1 ? 's' : ''} left
+                          </span>
+                        </Button>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>No available time slots for this date</p>
+                    <p className="text-sm mt-2">Try selecting a different date</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Selected Summary */}
+            {bookingForm.selectedDate && bookingForm.selectedTime && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="h-6 w-6 text-green-600" />
+                  <div>
+                    <h4 className="font-semibold text-green-800">
+                      Session Confirmed for {getDateLabel(bookingForm.selectedDate)} at {bookingForm.selectedTime}
+                    </h4>
+                    <p className="text-sm text-green-600 mt-1">
+                      Duration: {selectedSchedule?.duration} minutes • 
+                      Price: Rp {selectedSchedule?.price.toLocaleString('id-ID')}
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
 
-            {bookingForm.selectedDate && availableTimeSlots.length === 0 && (
-              <div className="p-4 border border-orange-200 bg-orange-50 rounded-lg text-center">
-                <p className="text-sm text-orange-800">
-                  No available time slots for {getDateLabel(bookingForm.selectedDate)}. 
-                  Please select a different date.
-                </p>
-              </div>
-            )}
-
-            {/* Notes */}
+            {/* Notes Section */}
             <div>
-              <Label htmlFor="notes" className="text-sm font-medium">
+              <Label htmlFor="notes" className="text-base font-semibold mb-3 flex items-center gap-2">
+                <div className="h-5 w-5 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600">
+                  3
+                </div>
                 Notes for Mentor (Optional)
               </Label>
               <Textarea
                 id="notes"
-                placeholder="Let your mentor know what you'd like to focus on..."
+                placeholder="Let your mentor know what you'd like to focus on during this session..."
                 value={bookingForm.notes}
                 onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })}
-                className="mt-2"
-                rows={3}
+                className="min-h-[100px]"
+                rows={4}
               />
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="px-6 py-4 border-t bg-gray-50 flex justify-between">
             <Button variant="outline" onClick={() => setShowBookingDialog(false)}>
               Cancel
             </Button>
             <Button 
               onClick={createBooking} 
               disabled={booking || !bookingForm.selectedDate || !bookingForm.selectedTime}
-              className="gap-2"
+              className="gap-2 min-w-[140px]"
+              size="lg"
             >
               {booking ? (
                 <>
