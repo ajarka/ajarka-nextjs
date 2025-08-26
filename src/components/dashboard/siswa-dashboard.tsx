@@ -370,6 +370,9 @@ export function SiswaDashboard() {
             <Button className="w-full" asChild>
               <Link href="/dashboard/kursus">Lanjutkan Belajar</Link>
             </Button>
+            <Button className="w-full" asChild>
+              <Link href="/dashboard/booking">Book Mentor Session</Link>
+            </Button>
             <Button className="w-full" variant="outline" asChild>
               <Link href="/dashboard/jadwal">Lihat Jadwal</Link>
             </Button>

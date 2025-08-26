@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Github } from 'lucide-react'
+import { FcGoogle } from 'react-icons/fc'
 import { motion } from 'framer-motion'
 
 export default function LoginPage() {
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [oauthLoading, setOauthLoading] = useState<string | null>(null)
   const [error, setError] = useState('')
   
   const router = useRouter()
@@ -48,6 +50,21 @@ export default function LoginPage() {
     } catch (error) {
       setError('Terjadi kesalahan. Silakan coba lagi.')
       setIsLoading(false)
+    }
+  }
+
+  const handleOAuthSignIn = async (provider: string) => {
+    setOauthLoading(provider)
+    setError('')
+    
+    try {
+      await signIn(provider, { 
+        callbackUrl: '/dashboard',
+        redirect: true
+      })
+    } catch (error) {
+      setError('Terjadi kesalahan saat login dengan ' + provider)
+      setOauthLoading(null)
     }
   }
 
@@ -136,6 +153,51 @@ export default function LoginPage() {
                 )}
               </Button>
             </form>
+
+            {/* OAuth Divider */}
+            <div className="my-6 relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Atau lanjutkan dengan
+                </span>
+              </div>
+            </div>
+
+            {/* OAuth Buttons */}
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleOAuthSignIn('google')}
+                disabled={oauthLoading !== null || isLoading}
+                className="h-12"
+              >
+                {oauthLoading === 'google' ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <FcGoogle className="mr-2 h-4 w-4" />
+                )}
+                Google
+              </Button>
+              
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleOAuthSignIn('github')}
+                disabled={oauthLoading !== null || isLoading}
+                className="h-12"
+              >
+                {oauthLoading === 'github' ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Github className="mr-2 h-4 w-4" />
+                )}
+                GitHub
+              </Button>
+            </div>
 
             <div className="mt-6 space-y-4">
               <div className="text-center">

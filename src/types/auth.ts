@@ -8,6 +8,8 @@ declare module 'next-auth' {
       role: 'admin' | 'mentor' | 'siswa'
       avatar: string
       phone: string
+      provider?: string
+      emailVerified?: boolean
     } & DefaultSession['user']
   }
 
@@ -15,6 +17,8 @@ declare module 'next-auth' {
     role: 'admin' | 'mentor' | 'siswa'
     avatar: string
     phone: string
+    provider?: string
+    emailVerified?: boolean
   }
 }
 
@@ -23,6 +27,8 @@ declare module 'next-auth/jwt' {
     role: 'admin' | 'mentor' | 'siswa'
     avatar: string
     phone: string
+    provider?: string
+    emailVerified?: boolean
   }
 }
 

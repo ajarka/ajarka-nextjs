@@ -8,6 +8,8 @@
       "name": "Super Admin",
       "avatar": "https://ui-avatars.com/api/?name=Super+Admin&background=0d47a1&color=fff",
       "phone": "+6281234567890",
+      "provider": "email",
+      "emailVerified": true,
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z"
     },
@@ -28,6 +30,8 @@
       ],
       "rating": 4.8,
       "totalStudents": 45,
+      "provider": "email",
+      "emailVerified": true,
       "createdAt": "2024-01-02T00:00:00.000Z",
       "updatedAt": "2024-01-02T00:00:00.000Z"
     },
@@ -44,8 +48,56 @@
         "Frontend Development",
         "UI/UX Design"
       ],
+      "provider": "email",
+      "emailVerified": true,
       "createdAt": "2024-01-03T00:00:00.000Z",
       "updatedAt": "2024-01-03T00:00:00.000Z"
+    },
+    {
+      "id": 4,
+      "email": "mentor2@ajarka.com",
+      "password": "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi",
+      "role": "mentor",
+      "name": "Sarah Wilson",
+      "avatar": "https://ui-avatars.com/api/?name=Sarah+Wilson&background=1976d2&color=fff",
+      "phone": "+6281234567893",
+      "bio": "UI/UX Designer and Frontend specialist. Passionate about creating beautiful user experiences.",
+      "skills": [
+        "UI/UX Design",
+        "React",
+        "Vue.js",
+        "Figma",
+        "JavaScript"
+      ],
+      "rating": 4.9,
+      "totalStudents": 32,
+      "provider": "email",
+      "emailVerified": true,
+      "createdAt": "2024-01-04T00:00:00.000Z",
+      "updatedAt": "2024-01-04T00:00:00.000Z"
+    },
+    {
+      "id": 5,
+      "email": "mentor3@ajarka.com",
+      "password": "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi",
+      "role": "mentor",
+      "name": "Michael Brown",
+      "avatar": "https://ui-avatars.com/api/?name=Michael+Brown&background=d32f2f&color=fff",
+      "phone": "+6281234567894",
+      "bio": "Backend developer with expertise in Node.js, Python, and cloud architecture.",
+      "skills": [
+        "Node.js",
+        "Python",
+        "AWS",
+        "Docker",
+        "MongoDB"
+      ],
+      "rating": 4.7,
+      "totalStudents": 28,
+      "provider": "email",
+      "emailVerified": true,
+      "createdAt": "2024-01-05T00:00:00.000Z",
+      "updatedAt": "2024-01-05T00:00:00.000Z"
     }
   ],
   "courses": [
@@ -294,6 +346,222 @@
       ],
       "isActive": false,
       "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "email_verifications": [
+    {
+      "id": 1,
+      "email": "test@example.com",
+      "name": "Test User",
+      "token": "sample_token_123",
+      "expiresAt": "2024-12-25T10:00:00.000Z",
+      "verified": false,
+      "createdAt": "2024-01-24T10:00:00.000Z"
+    }
+  ],
+  "mentor_schedules": [
+    {
+      "id": 1,
+      "mentorId": 2,
+      "title": "Frontend Mentoring Session",
+      "description": "1-on-1 mentoring session untuk Frontend Development",
+      "duration": 60,
+      "maxCapacity": 5,
+      "price": 150000,
+      "meetingType": "online",
+      "meetingLink": "https://meet.google.com/abc-def-ghi",
+      "timezone": "Asia/Jakarta",
+      "isActive": true,
+      "createdAt": "2024-01-15T00:00:00.000Z",
+      "updatedAt": "2024-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "mentorId": 2,
+      "title": "Full-Stack Development",
+      "description": "Complete full-stack web development mentoring",
+      "duration": 90,
+      "maxCapacity": 3,
+      "price": 200000,
+      "meetingType": "online",
+      "meetingLink": "https://meet.google.com/def-ghi-jkl",
+      "timezone": "Asia/Jakarta",
+      "isActive": true,
+      "createdAt": "2024-01-15T00:00:00.000Z",
+      "updatedAt": "2024-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 3,
+      "mentorId": 4,
+      "title": "UI/UX Design Fundamentals",
+      "description": "Learn design principles and user experience",
+      "duration": 60,
+      "maxCapacity": 4,
+      "price": 175000,
+      "meetingType": "online",
+      "meetingLink": "https://meet.google.com/ghi-jkl-mno",
+      "timezone": "Asia/Jakarta",
+      "isActive": true,
+      "createdAt": "2024-01-16T00:00:00.000Z",
+      "updatedAt": "2024-01-16T00:00:00.000Z"
+    },
+    {
+      "id": 4,
+      "mentorId": 5,
+      "title": "Backend Development with Node.js",
+      "description": "Server-side development and API creation",
+      "duration": 75,
+      "maxCapacity": 6,
+      "price": 180000,
+      "meetingType": "online",
+      "meetingLink": "https://meet.google.com/jkl-mno-pqr",
+      "timezone": "Asia/Jakarta",
+      "isActive": true,
+      "createdAt": "2024-01-17T00:00:00.000Z",
+      "updatedAt": "2024-01-17T00:00:00.000Z"
+    }
+  ],
+  "mentor_availability": [
+    {
+      "id": 1,
+      "mentorId": 2,
+      "scheduleId": 1,
+      "dayOfWeek": 1,
+      "startTime": "09:00",
+      "endTime": "17:00",
+      "isRecurring": true,
+      "specificDate": null,
+      "isActive": true,
+      "createdAt": "2024-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "mentorId": 2,
+      "scheduleId": 1,
+      "dayOfWeek": 3,
+      "startTime": "13:00",
+      "endTime": "18:00",
+      "isRecurring": true,
+      "specificDate": null,
+      "isActive": true,
+      "createdAt": "2024-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 3,
+      "mentorId": 2,
+      "scheduleId": 1,
+      "dayOfWeek": 5,
+      "startTime": "10:00",
+      "endTime": "16:00",
+      "isRecurring": true,
+      "specificDate": null,
+      "isActive": true,
+      "createdAt": "2024-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 4,
+      "mentorId": 2,
+      "scheduleId": 2,
+      "dayOfWeek": 2,
+      "startTime": "14:00",
+      "endTime": "18:00",
+      "isRecurring": true,
+      "specificDate": null,
+      "isActive": true,
+      "createdAt": "2024-01-16T00:00:00.000Z"
+    },
+    {
+      "id": 5,
+      "mentorId": 2,
+      "scheduleId": 2,
+      "dayOfWeek": 4,
+      "startTime": "09:00",
+      "endTime": "15:00",
+      "isRecurring": true,
+      "specificDate": null,
+      "isActive": true,
+      "createdAt": "2024-01-16T00:00:00.000Z"
+    },
+    {
+      "id": 6,
+      "mentorId": 4,
+      "scheduleId": 3,
+      "dayOfWeek": 1,
+      "startTime": "10:00",
+      "endTime": "17:00",
+      "isRecurring": true,
+      "specificDate": null,
+      "isActive": true,
+      "createdAt": "2024-01-17T00:00:00.000Z"
+    },
+    {
+      "id": 7,
+      "mentorId": 4,
+      "scheduleId": 3,
+      "dayOfWeek": 3,
+      "startTime": "13:00",
+      "endTime": "18:00",
+      "isRecurring": true,
+      "specificDate": null,
+      "isActive": true,
+      "createdAt": "2024-01-17T00:00:00.000Z"
+    },
+    {
+      "id": 8,
+      "mentorId": 5,
+      "scheduleId": 4,
+      "dayOfWeek": 2,
+      "startTime": "09:00",
+      "endTime": "16:00",
+      "isRecurring": true,
+      "specificDate": null,
+      "isActive": true,
+      "createdAt": "2024-01-18T00:00:00.000Z"
+    },
+    {
+      "id": 9,
+      "mentorId": 5,
+      "scheduleId": 4,
+      "dayOfWeek": 4,
+      "startTime": "14:00",
+      "endTime": "19:00",
+      "isRecurring": true,
+      "specificDate": null,
+      "isActive": true,
+      "createdAt": "2024-01-18T00:00:00.000Z"
+    },
+    {
+      "id": 10,
+      "mentorId": 5,
+      "scheduleId": 4,
+      "dayOfWeek": 6,
+      "startTime": "10:00",
+      "endTime": "14:00",
+      "isRecurring": true,
+      "specificDate": null,
+      "isActive": true,
+      "createdAt": "2024-01-18T00:00:00.000Z"
+    }
+  ],
+  "bookings": [
+    {
+      "id": 1,
+      "mentorId": 2,
+      "studentId": 3,
+      "scheduleId": 1,
+      "bookingDate": "2024-01-22T09:00:00.000Z",
+      "endDate": "2024-01-22T10:00:00.000Z",
+      "duration": 60,
+      "status": "confirmed",
+      "meetingLink": "https://meet.google.com/abc-def-ghi",
+      "studentNotes": "Saya ingin belajar tentang React Hooks",
+      "mentorNotes": "Persiapkan materi React Hooks dan useEffect",
+      "price": 150000,
+      "paymentStatus": "paid",
+      "googleCalendarEventId": "sample_event_id",
+      "reminderSent": false,
+      "createdAt": "2024-01-20T10:00:00.000Z",
+      "updatedAt": "2024-01-20T10:00:00.000Z"
     }
   ],
   "contact_messages": [

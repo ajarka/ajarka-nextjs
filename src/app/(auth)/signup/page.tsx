@@ -66,35 +66,26 @@ export default function SignUpPage() {
     setIsLoading(true)
 
     try {
-      // Check if email already exists
-      const existingUsers = await axios.get(`${API_BASE_URL}/users?email=${formData.email}`)
-      if (existingUsers.data.length > 0) {
-        setError('Email sudah terdaftar')
-        setIsLoading(false)
-        return
+      // Send verification email
+      const response = await fetch('/api/auth/send-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          name: formData.name
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess(true)
+        // Don't redirect automatically, show success message
+      } else {
+        setError(data.error || 'Terjadi kesalahan saat mengirim email verifikasi')
       }
-
-      // Hash password
-      const hashedPassword = await bcrypt.hash(formData.password, 10)
-
-      // Create user
-      const newUser = {
-        email: formData.email,
-        password: hashedPassword,
-        name: formData.name,
-        role: formData.role,
-        phone: formData.phone,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=3b82f6&color=fff`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-
-      await axios.post(`${API_BASE_URL}/users`, newUser)
-
-      setSuccess(true)
-      setTimeout(() => {
-        router.push('/login?message=registration-success')
-      }, 2000)
 
     } catch (error) {
       console.error('Registration error:', error)
@@ -123,11 +114,25 @@ export default function SignUpPage() {
               >
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </motion.div>
-              <h2 className="text-2xl font-bold text-green-600 mb-2">Pendaftaran Berhasil!</h2>
+              <h2 className="text-2xl font-bold text-green-600 mb-2">Email Verifikasi Terkirim!</h2>
               <p className="text-muted-foreground mb-4">
-                Akun Anda telah berhasil dibuat. Anda akan diarahkan ke halaman login.
+                Kami telah mengirim link verifikasi ke <strong>{formData.email}</strong>. 
+                Silakan cek email Anda untuk melanjutkan proses registrasi.
               </p>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600 mx-auto"></div>
+              <div className="space-y-4">
+                <Button 
+                  onClick={() => setSuccess(false)}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Daftar Email Lain
+                </Button>
+                <Button asChild className="w-full">
+                  <Link href="/login">
+                    Ke Halaman Login
+                  </Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
