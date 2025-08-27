@@ -44,7 +44,7 @@ export default function BookingPage() {
   const studentId = parseInt(session.user.id as string) || 3 // fallback to 3 for demo
 
   return (
-    <div className="container px-4 py-8">
+    <div className="px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <Button variant="ghost" size="sm" asChild>

@@ -97,7 +97,7 @@ const recentTransactions = [
 
 export function AdminDashboard() {
   return (
-    <div className="container px-4 py-8 space-y-8">
+    <div className="px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

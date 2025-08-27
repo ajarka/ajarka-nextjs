@@ -48,7 +48,7 @@ export function FAQSection() {
 
   return (
     <section className="py-20">
-      <div className="container px-4">
+      <div className="px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

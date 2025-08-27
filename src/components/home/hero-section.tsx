@@ -12,7 +12,7 @@ export function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
       <div className="absolute inset-0 bg-grid-pattern opacity-5" />
       
-      <div className="container px-4 relative z-10">
+      <div className="px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}

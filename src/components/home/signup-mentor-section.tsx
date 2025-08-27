@@ -32,7 +32,7 @@ const mentorBenefits = [
 export function SignUpMentorSection() {
   return (
     <section className="py-20">
-      <div className="container px-4">
+      <div className="px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left Content */}

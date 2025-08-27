@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Read(/c:\\Users\\aditi\\OneDrive\\Gambar\\Screenshot/**)",
-      "Read(/c:\\Users\\aditi\\OneDrive\\Gambar\\Screenshot/**)"
+      "Read(/c:\\Users\\aditi\\OneDrive\\Gambar\\Screenshot/**)",
+      "Read(/c:\\Users\\aditi\\OneDrive\\Gambar\\Screenshot/**)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

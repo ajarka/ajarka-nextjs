@@ -46,15 +46,17 @@ export default function DashboardPage() {
       return <SiswaDashboard />
     default:
       return (
-        <div className="container px-4 py-8">
-          <Card>
-            <CardContent className="p-8 text-center">
-              <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-              <p className="text-muted-foreground">
-                Role tidak dikenali. Silakan hubungi administrator.
-              </p>
-            </CardContent>
-          </Card>
+        <div className="px-4 sm:px-6 lg:px-8 py-8">
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <CardContent className="p-8 text-center">
+                <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+                <p className="text-muted-foreground">
+                  Role tidak dikenali. Silakan hubungi administrator.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       )
   }
