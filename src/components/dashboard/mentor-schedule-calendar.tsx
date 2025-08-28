@@ -19,7 +19,9 @@ import {
   CheckCircle2,
   Plus,
   Edit3,
-  Trash2
+  Trash2,
+  Bell,
+  AlertTriangle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import 'react-big-calendar/lib/css/react-big-calendar.css'
@@ -58,6 +60,7 @@ interface MentorScheduleCalendarProps {
   availabilities: any[]
   bookings: any[]
   onAddAvailability: (availability: AvailabilityForm) => Promise<void>
+  onUpdateAvailability: (availabilityId: number, availability: AvailabilityForm) => Promise<void>
   onDeleteAvailability: (availabilityId: number) => Promise<void>
   schedule: any
 }
@@ -78,14 +81,19 @@ export default function MentorScheduleCalendar({
   availabilities,
   bookings,
   onAddAvailability,
+  onUpdateAvailability,
   onDeleteAvailability,
   schedule
 }: MentorScheduleCalendarProps) {
   const [currentView, setCurrentView] = useState<View>(Views.WEEK)
   const [date, setDate] = useState(new Date())
   const [showAddDialog, setShowAddDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [selectedSlot, setSelectedSlot] = useState<{start: Date, end: Date} | null>(null)
+  const [selectedAvailability, setSelectedAvailability] = useState<any>(null)
   const [saving, setSaving] = useState(false)
+  const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add')
 
   const [availabilityForm, setAvailabilityForm] = useState<AvailabilityForm>({
     dayOfWeek: 1,
@@ -136,7 +144,9 @@ export default function MentorScheduleCalendar({
               dayOfWeek: avail.dayOfWeek,
               startTime: avail.startTime,
               endTime: avail.endTime,
-              isRecurring: avail.isRecurring
+              isRecurring: avail.isRecurring,
+              availabilityId: avail.id,
+              originalAvailability: avail
             }
           })
         }
@@ -168,6 +178,7 @@ export default function MentorScheduleCalendar({
 
   const handleSelectSlot = useCallback((slotInfo: any) => {
     setSelectedSlot(slotInfo)
+    setDialogMode('add')
     setAvailabilityForm({
       ...availabilityForm,
       dayOfWeek: slotInfo.start.getDay(),
@@ -178,24 +189,90 @@ export default function MentorScheduleCalendar({
     setShowAddDialog(true)
   }, [availabilityForm, scheduleId])
 
+  const handleSelectEvent = useCallback((event: ScheduleEvent) => {
+    if (event.resource?.type === 'availability') {
+      const originalAvailability = event.resource.originalAvailability
+      setSelectedAvailability(originalAvailability)
+      setAvailabilityForm({
+        dayOfWeek: originalAvailability.dayOfWeek,
+        startTime: originalAvailability.startTime,
+        endTime: originalAvailability.endTime,
+        scheduleId: originalAvailability.scheduleId,
+        isRecurring: originalAvailability.isRecurring
+      })
+      setDialogMode('edit')
+      setShowEditDialog(true)
+    }
+  }, [])
+
   const handleAddAvailability = async () => {
     setSaving(true)
     try {
       await onAddAvailability(availabilityForm)
       setShowAddDialog(false)
       setSelectedSlot(null)
-      setAvailabilityForm({
-        dayOfWeek: 1,
-        startTime: '09:00',
-        endTime: '17:00',
-        scheduleId: scheduleId,
-        isRecurring: true
-      })
+      resetForm()
     } catch (error) {
       console.error('Error adding availability:', error)
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleUpdateAvailability = async () => {
+    if (!selectedAvailability) return
+    
+    setSaving(true)
+    try {
+      await onUpdateAvailability(selectedAvailability.id, availabilityForm)
+      setShowEditDialog(false)
+      setSelectedAvailability(null)
+      resetForm()
+    } catch (error) {
+      console.error('Error updating availability:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeleteClick = () => {
+    setShowEditDialog(false)
+    setShowDeleteDialog(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!selectedAvailability) return
+    
+    setSaving(true)
+    try {
+      await onDeleteAvailability(selectedAvailability.id)
+      setShowDeleteDialog(false)
+      setSelectedAvailability(null)
+      resetForm()
+    } catch (error) {
+      console.error('Error deleting availability:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const resetForm = () => {
+    setAvailabilityForm({
+      dayOfWeek: 1,
+      startTime: '09:00',
+      endTime: '17:00',
+      scheduleId: scheduleId,
+      isRecurring: true
+    })
+  }
+
+  const closeAllDialogs = () => {
+    setShowAddDialog(false)
+    setShowEditDialog(false)
+    setShowDeleteDialog(false)
+    setSelectedSlot(null)
+    setSelectedAvailability(null)
+    resetForm()
   }
 
   const eventStyleGetter = useCallback((event: ScheduleEvent) => {
@@ -358,6 +435,7 @@ export default function MentorScheduleCalendar({
             onNavigate={handleNavigate}
             onView={handleViewChange}
             onSelectSlot={handleSelectSlot}
+            onSelectEvent={handleSelectEvent}
             selectable
             view={currentView}
             date={date}
@@ -375,19 +453,24 @@ export default function MentorScheduleCalendar({
         </CardContent>
       </Card>
 
-      {/* Legend */}
-      <div className="mt-4 flex items-center justify-center gap-6 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-green-500 rounded shadow-sm"></div>
-          <span>Available slots</span>
+      {/* Legend & Instructions */}
+      <div className="mt-4 space-y-3">
+        <div className="flex items-center justify-center gap-6 text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-green-500 rounded shadow-sm"></div>
+            <span>Available slots</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-red-500 rounded shadow-sm"></div>
+            <span>Booked</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-gray-500 rounded shadow-sm"></div>
+            <span>Blocked</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-red-500 rounded shadow-sm"></div>
-          <span>Booked</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-gray-500 rounded shadow-sm"></div>
-          <span>Blocked</span>
+        <div className="text-center text-sm text-muted-foreground">
+          💡 Click on empty slots to add availability • Click on green slots to edit or delete
         </div>
       </div>
 
@@ -465,6 +548,170 @@ export default function MentorScheduleCalendar({
                 <>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Availability
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Availability Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Availability Slot</DialogTitle>
+            <DialogDescription>
+              Update your availability for {schedule?.title} sessions
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div>
+              <Label>Day of Week</Label>
+              <Select 
+                value={availabilityForm.dayOfWeek.toString()} 
+                onValueChange={(value) => setAvailabilityForm({ ...availabilityForm, dayOfWeek: parseInt(value) })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DAYS_OF_WEEK.map((day) => (
+                    <SelectItem key={day.value} value={day.value.toString()}>
+                      {day.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Start Time</Label>
+                <Input
+                  type="time"
+                  value={availabilityForm.startTime}
+                  onChange={(e) => setAvailabilityForm({ ...availabilityForm, startTime: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>End Time</Label>
+                <Input
+                  type="time"
+                  value={availabilityForm.endTime}
+                  onChange={(e) => setAvailabilityForm({ ...availabilityForm, endTime: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="recurring-edit"
+                checked={availabilityForm.isRecurring}
+                onChange={(e) => setAvailabilityForm({ ...availabilityForm, isRecurring: e.target.checked })}
+              />
+              <Label htmlFor="recurring-edit">Recurring weekly</Label>
+            </div>
+
+            {/* Notification Info */}
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <Bell className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium">Notifikasi Otomatis</p>
+                  <p className="mt-1">Student akan mendapat notifikasi tentang perubahan jadwal ini.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex justify-between">
+            <div className="flex gap-2">
+              <Button 
+                variant="destructive" 
+                onClick={handleDeleteClick}
+                disabled={saving}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateAvailability} disabled={saving}>
+                {saving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Edit3 className="h-4 w-4 mr-2" />
+                    Update Availability
+                  </>
+                )}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-red-600" />
+              Delete Availability Slot
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this availability slot? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedAvailability && (
+            <div className="py-4 space-y-4">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="text-sm">
+                  <p><strong>Day:</strong> {DAYS_OF_WEEK.find(d => d.value === selectedAvailability.dayOfWeek)?.label}</p>
+                  <p><strong>Time:</strong> {selectedAvailability.startTime} - {selectedAvailability.endTime}</p>
+                  <p><strong>Recurring:</strong> {selectedAvailability.isRecurring ? 'Yes' : 'No'}</p>
+                </div>
+              </div>
+
+              {/* Critical Notification Warning */}
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-amber-800">
+                    <p className="font-medium">Peringatan Penting</p>
+                    <p className="mt-1">
+                      Menghapus jadwal ini akan mengirim notifikasi darurat ke semua student. 
+                      Student yang sudah booking akan mendapat notifikasi prioritas tinggi.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={saving}>
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Permanently
                 </>
               )}
             </Button>

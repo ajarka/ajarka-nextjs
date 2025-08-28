@@ -585,6 +585,17 @@
       "mentorId": 2,
       "isActive": true,
       "createdAt": "2025-08-26T08:00:36.526Z"
+    },
+    {
+      "dayOfWeek": 4,
+      "startTime": "16:00",
+      "endTime": "18:00",
+      "scheduleId": "1",
+      "isRecurring": false,
+      "mentorId": 2,
+      "id": "d0f9",
+      "isActive": true,
+      "updatedAt": "2025-08-28T17:17:35.643Z"
     }
   ],
   "bookings": [

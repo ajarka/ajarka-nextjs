@@ -32,6 +32,7 @@ import BookingCapacityMonitor from './booking-capacity-monitor'
 import MentorScheduleCalendar from './mentor-schedule-calendar'
 import { NotificationService } from '@/lib/notification-service'
 import { useSession } from 'next-auth/react'
+import { useMeetingGeneration } from '@/hooks/useMeetingGeneration'
 
 interface MentorSchedule {
   id?: number
@@ -41,6 +42,7 @@ interface MentorSchedule {
   maxCapacity: number
   price: number
   meetingType: 'online' | 'offline'
+  meetingProvider: 'zoom' | 'google-meet'
   meetingLink: string
   timezone: string
   isActive: boolean
@@ -73,6 +75,7 @@ const TIME_SLOTS = Array.from({ length: 24 }, (_, i) => {
 
 export default function MentorScheduleManager({ mentorId }: { mentorId: number }) {
   const { data: session } = useSession()
+  const { generateMeeting, isGenerating, error: meetingError, clearError } = useMeetingGeneration()
   const [schedules, setSchedules] = useState<MentorSchedule[]>([])
   const [availabilities, setAvailabilities] = useState<AvailabilitySlot[]>([])
   const [bookings, setBookings] = useState<any[]>([])
@@ -89,6 +92,7 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
     maxCapacity: 1,
     price: 150000,
     meetingType: 'online',
+    meetingProvider: 'google-meet',
     meetingLink: '',
     timezone: 'Asia/Jakarta',
     isActive: true
@@ -184,6 +188,7 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
           maxCapacity: 1,
           price: 150000,
           meetingType: 'online',
+          meetingProvider: 'google-meet',
           meetingLink: '',
           timezone: 'Asia/Jakarta',
           isActive: true
@@ -224,13 +229,96 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
     }
   }
 
-  const deleteAvailability = async (availabilityId: number) => {
+  const updateAvailability = async (availabilityId: number, availabilityData: any) => {
+    if (!activeSchedule?.id) return
+    
+    setSaving(true)
     try {
+      // Get current availability data for comparison
+      const currentResponse = await fetch(`http://localhost:3001/mentor_availability/${availabilityId}`)
+      const currentAvailability = await currentResponse.json()
+
+      const response = await fetch(`http://localhost:3001/mentor_availability/${availabilityId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...availabilityData,
+          mentorId,
+          id: availabilityId,
+          isActive: true,
+          updatedAt: new Date().toISOString()
+        })
+      })
+      
+      if (response.ok) {
+        // Send notifications to students about the availability update
+        if (session?.user) {
+          try {
+            await NotificationService.notifyAvailabilityUpdated(
+              session.user.id,
+              session.user.name || 'Mentor',
+              activeSchedule.id.toString(),
+              activeSchedule.title,
+              {
+                dayOfWeek: currentAvailability.dayOfWeek,
+                startTime: currentAvailability.startTime,
+                endTime: currentAvailability.endTime
+              },
+              {
+                dayOfWeek: availabilityData.dayOfWeek,
+                startTime: availabilityData.startTime,
+                endTime: availabilityData.endTime
+              }
+            )
+            console.log('Availability update notifications sent to students')
+          } catch (notificationError) {
+            console.warn('Failed to send availability update notifications:', notificationError)
+          }
+        }
+
+        await fetchAvailabilities(activeSchedule.id)
+      }
+    } catch (error) {
+      console.error('Error updating availability:', error)
+      throw error
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const deleteAvailability = async (availabilityId: number) => {
+    if (!activeSchedule?.id) return
+    
+    try {
+      // Get availability data before deletion for notifications
+      const availabilityResponse = await fetch(`http://localhost:3001/mentor_availability/${availabilityId}`)
+      const availabilityData = await availabilityResponse.json()
+
       const response = await fetch(`http://localhost:3001/mentor_availability/${availabilityId}`, {
         method: 'DELETE'
       })
       
-      if (response.ok && activeSchedule?.id) {
+      if (response.ok) {
+        // Send notifications to students about the availability deletion
+        if (session?.user && availabilityData) {
+          try {
+            await NotificationService.notifyAvailabilityDeleted(
+              session.user.id,
+              session.user.name || 'Mentor',
+              activeSchedule.id.toString(),
+              activeSchedule.title,
+              {
+                dayOfWeek: availabilityData.dayOfWeek,
+                startTime: availabilityData.startTime,
+                endTime: availabilityData.endTime
+              }
+            )
+            console.log('Availability deletion notifications sent to students')
+          } catch (notificationError) {
+            console.warn('Failed to send availability deletion notifications:', notificationError)
+          }
+        }
+
         await fetchAvailabilities(activeSchedule.id)
       }
     } catch (error) {
@@ -359,20 +447,57 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="online">Online</SelectItem>
-                      <SelectItem value="offline">Offline</SelectItem>
+                      <SelectItem value="offline">Tatap Muka</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               {newSchedule.meetingType === 'online' && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="meetingProvider">Platform Meeting</Label>
+                    <Select value={newSchedule.meetingProvider} onValueChange={(value: 'zoom' | 'google-meet') => setNewSchedule({ ...newSchedule, meetingProvider: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="google-meet">
+                          <div className="flex items-center gap-2">
+                            <Video className="h-4 w-4" />
+                            Google Meet
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="zoom">
+                          <div className="flex items-center gap-2">
+                            <Video className="h-4 w-4" />
+                            Zoom
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-blue-800">
+                        <p className="font-medium">Link meeting otomatis akan dibuat!</p>
+                        <p className="mt-1">Sistem akan secara otomatis generate link {newSchedule.meetingProvider === 'zoom' ? 'Zoom' : 'Google Meet'} ketika ada booking baru. Link akan dikirim ke mentor dan student melalui notifikasi.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {newSchedule.meetingType === 'offline' && (
                 <div className="space-y-2">
-                  <Label htmlFor="meetingLink">Link Meeting</Label>
+                  <Label htmlFor="meetingLocation">Lokasi Meeting</Label>
                   <Input
-                    id="meetingLink"
+                    id="meetingLocation"
                     value={newSchedule.meetingLink}
                     onChange={(e) => setNewSchedule({ ...newSchedule, meetingLink: e.target.value })}
-                    placeholder="https://meet.google.com/abc-def-ghi"
+                    placeholder="Alamat atau lokasi meeting offline"
                   />
                 </div>
               )}
@@ -489,6 +614,7 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
                     availabilities={availabilities.filter(a => a.scheduleId === activeSchedule.id)}
                     bookings={bookings.filter(b => b.scheduleId === activeSchedule.id)}
                     onAddAvailability={addAvailability}
+                    onUpdateAvailability={updateAvailability}
                     onDeleteAvailability={deleteAvailability}
                     schedule={activeSchedule}
                   />

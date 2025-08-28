@@ -25,6 +25,7 @@ import { format, addDays, startOfDay, isToday, isTomorrow, addMinutes, setHours,
 import { id as localeId } from 'date-fns/locale'
 import { NotificationService } from '@/lib/notification-service'
 import { useSession } from 'next-auth/react'
+import { useMeetingGeneration } from '@/hooks/useMeetingGeneration'
 
 interface Mentor {
   id: number
@@ -45,6 +46,7 @@ interface MentorSchedule {
   maxCapacity: number
   price: number
   meetingType: 'online' | 'offline'
+  meetingProvider: 'zoom' | 'google-meet'
   meetingLink: string
   timezone: string
   isActive: boolean
@@ -88,6 +90,7 @@ interface BookingFormData {
 
 export default function StudentBookingInterface({ studentId }: { studentId: number }) {
   const { data: session } = useSession()
+  const { generateMeeting, isGenerating, error: meetingError, clearError } = useMeetingGeneration()
   const [mentors, setMentors] = useState<Mentor[]>([])
   const [schedules, setSchedules] = useState<MentorSchedule[]>([])
   const [availabilities, setAvailabilities] = useState<AvailabilitySlot[]>([])
@@ -334,6 +337,40 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
       
       const endDate = addMinutes(bookingDate, selectedSchedule.duration)
 
+      let meetingLink = selectedSchedule.meetingLink
+      let generatedMeetingData: any = null
+
+      // Generate meeting link automatically for online sessions
+      if (selectedSchedule.meetingType === 'online' && selectedMentor && session?.user?.email) {
+        try {
+          clearError()
+          
+          // Get mentor email - you might need to fetch this from the mentor data
+          const mentorEmail = `mentor${selectedMentor.id}@ajarka.com` // placeholder - replace with real email
+          const studentEmail = session.user.email
+
+          const meetingDetails = {
+            title: `${selectedSchedule.title} - ${selectedMentor.name} & ${session.user.name}`,
+            description: `Mentoring session: ${selectedSchedule.title}\n\nMentor: ${selectedMentor.name}\nStudent: ${session.user.name}\n\nNotes: ${bookingForm.notes}`,
+            startTime: bookingDate.toISOString(),
+            endTime: endDate.toISOString(),
+            mentorEmail,
+            studentEmail,
+            duration: selectedSchedule.duration
+          }
+
+          const meetingResult = await generateMeeting(selectedSchedule.meetingProvider, meetingDetails)
+          
+          if (meetingResult) {
+            meetingLink = meetingResult.joinUrl
+            generatedMeetingData = meetingResult
+          }
+        } catch (meetingError) {
+          console.warn('Failed to generate meeting link, using fallback:', meetingError)
+          // Continue with booking even if meeting generation fails
+        }
+      }
+
       const newBooking = {
         mentorId: bookingForm.mentorId,
         studentId,
@@ -342,7 +379,10 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
         endDate: endDate.toISOString(),
         duration: selectedSchedule.duration,
         status: 'pending',
-        meetingLink: selectedSchedule.meetingLink,
+        meetingLink,
+        meetingId: generatedMeetingData?.meetingId,
+        meetingProvider: selectedSchedule.meetingProvider,
+        meetingPassword: generatedMeetingData?.password,
         studentNotes: bookingForm.notes,
         price: selectedSchedule.price,
         paymentStatus: 'pending',
@@ -383,11 +423,31 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
               selectedMentor.id.toString(),
               bookingData.id.toString(),
               selectedSchedule.title,
-              bookingDate.toISOString()
+              bookingDate.toISOString(),
+              meetingLink,
+              selectedSchedule.meetingProvider
             )
             console.log('Notification sent to mentor')
           } catch (notificationError) {
             console.warn('Failed to send notification:', notificationError)
+          }
+        }
+
+        // Send separate meeting link notification if generated
+        if (generatedMeetingData && selectedMentor && session?.user) {
+          try {
+            await NotificationService.notifyMeetingLinkGenerated(
+              selectedMentor.id.toString(),
+              session.user.id,
+              bookingData.id.toString(),
+              selectedSchedule.title,
+              generatedMeetingData.joinUrl,
+              selectedSchedule.meetingProvider,
+              bookingDate.toISOString()
+            )
+            console.log('Meeting link notification sent')
+          } catch (notificationError) {
+            console.warn('Failed to send meeting link notification:', notificationError)
           }
         }
 
@@ -683,7 +743,12 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
                     <Video className="h-4 w-4 text-blue-600" /> : 
                     <Globe className="h-4 w-4 text-blue-600" />
                   }
-                  <span className="font-medium capitalize">{selectedSchedule?.meetingType}</span>
+                  <span className="font-medium">
+                    {selectedSchedule?.meetingType === 'online' 
+                      ? `Online via ${selectedSchedule.meetingProvider === 'zoom' ? 'Zoom' : 'Google Meet'}`
+                      : 'Tatap Muka'
+                    }
+                  </span>
                 </div>
               </div>
             </div>
@@ -859,19 +924,51 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
 
             {/* Selected Summary */}
             {bookingForm.selectedDate && bookingForm.selectedTime && (
-              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-6 w-6 text-green-600" />
-                  <div>
-                    <h4 className="font-semibold text-green-800">
-                      Session Confirmed for {getDateLabel(bookingForm.selectedDate)} at {bookingForm.selectedTime}
-                    </h4>
-                    <p className="text-sm text-green-600 mt-1">
-                      Duration: {selectedSchedule?.duration} minutes • 
-                      Price: Rp {selectedSchedule?.price.toLocaleString('id-ID')}
-                    </p>
+              <div className="mb-6 space-y-4">
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-6 w-6 text-green-600" />
+                    <div>
+                      <h4 className="font-semibold text-green-800">
+                        Session Confirmed for {getDateLabel(bookingForm.selectedDate)} at {bookingForm.selectedTime}
+                      </h4>
+                      <p className="text-sm text-green-600 mt-1">
+                        Duration: {selectedSchedule?.duration} minutes • 
+                        Price: Rp {selectedSchedule?.price.toLocaleString('id-ID')}
+                      </p>
+                    </div>
                   </div>
                 </div>
+
+                {selectedSchedule?.meetingType === 'online' && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Video className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-blue-800">
+                        <p className="font-medium">
+                          {selectedSchedule.meetingProvider === 'zoom' ? 'Zoom' : 'Google Meet'} Link Otomatis
+                        </p>
+                        <p className="mt-1">
+                          Link meeting akan dibuat secara otomatis dan dikirim melalui email serta notifikasi setelah booking dikonfirmasi.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {meetingError && (
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-amber-800">
+                        <p className="font-medium">Meeting Link Generation Issue</p>
+                        <p className="mt-1">
+                          {meetingError}. Anda masih bisa melanjutkan booking, link meeting akan dibuat manual oleh mentor.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -900,14 +997,14 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
             </Button>
             <Button 
               onClick={createBooking} 
-              disabled={booking || !bookingForm.selectedDate || !bookingForm.selectedTime}
-              className="gap-2 min-w-[140px]"
+              disabled={booking || isGenerating || !bookingForm.selectedDate || !bookingForm.selectedTime}
+              className="gap-2 min-w-[180px]"
               size="lg"
             >
-              {booking ? (
+              {booking || isGenerating ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                  Booking...
+                  {isGenerating ? 'Generating Meeting...' : 'Booking...'}
                 </>
               ) : (
                 <>
