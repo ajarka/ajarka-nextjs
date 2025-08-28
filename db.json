@@ -733,5 +733,42 @@
       "status": "new",
       "createdAt": "2025-08-24T21:33:32+07:00"
     }
+  ],
+  "notifications": [
+    {
+      "id": "1",
+      "recipientId": "3",
+      "recipientType": "siswa",
+      "senderId": "2",
+      "senderType": "mentor",
+      "type": "schedule_created",
+      "title": "New Schedule Available",
+      "message": "John Doe has created a new mentoring schedule: React Advanced Concepts",
+      "data": {
+        "scheduleId": "1",
+        "mentorName": "John Doe",
+        "scheduleTitle": "React Advanced Concepts"
+      },
+      "read": false,
+      "createdAt": "2024-01-15T09:00:00.000Z"
+    },
+    {
+      "id": "2",
+      "recipientId": "2",
+      "recipientType": "mentor",
+      "senderId": "3",
+      "senderType": "siswa",
+      "type": "booking_created",
+      "title": "New Booking Request",
+      "message": "Jane Smith has booked your session: Frontend Mentoring Session on Jan 25, 2024 at 14:00",
+      "data": {
+        "bookingId": "1",
+        "studentName": "Jane Smith",
+        "scheduleTitle": "Frontend Mentoring Session",
+        "bookingDate": "2024-01-25T14:00:00.000Z"
+      },
+      "read": true,
+      "createdAt": "2024-01-20T08:30:00.000Z"
+    }
   ]
 }

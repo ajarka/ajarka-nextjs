@@ -30,6 +30,8 @@ import { format, addDays, startOfWeek } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import BookingCapacityMonitor from './booking-capacity-monitor'
 import MentorScheduleCalendar from './mentor-schedule-calendar'
+import { NotificationService } from '@/lib/notification-service'
+import { useSession } from 'next-auth/react'
 
 interface MentorSchedule {
   id?: number
@@ -70,6 +72,7 @@ const TIME_SLOTS = Array.from({ length: 24 }, (_, i) => {
 })
 
 export default function MentorScheduleManager({ mentorId }: { mentorId: number }) {
+  const { data: session } = useSession()
   const [schedules, setSchedules] = useState<MentorSchedule[]>([])
   const [availabilities, setAvailabilities] = useState<AvailabilitySlot[]>([])
   const [bookings, setBookings] = useState<any[]>([])
@@ -156,6 +159,23 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
       })
       
       if (response.ok) {
+        const scheduleData = await response.json()
+        
+        // Send notifications to all students
+        if (session?.user) {
+          try {
+            await NotificationService.notifyScheduleCreated(
+              session.user.id,
+              session.user.name || 'Mentor',
+              scheduleData.id.toString(),
+              newSchedule.title
+            )
+            console.log('Notifications sent to students')
+          } catch (notificationError) {
+            console.warn('Failed to send notifications:', notificationError)
+          }
+        }
+
         await fetchSchedules()
         setNewSchedule({
           title: '',

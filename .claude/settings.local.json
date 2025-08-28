@@ -4,7 +4,12 @@
       "Read(/c:\\Users\\aditi\\OneDrive\\Gambar\\Screenshot/**)",
       "Read(/c:\\Users\\aditi\\OneDrive\\Gambar\\Screenshot/**)",
       "Read(/c:\\Users\\aditi\\OneDrive\\Gambar\\Screenshot/**)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npx json-server:*)",
+      "Bash(taskkill:*)",
+      "Bash(cmd /c:*)",
+      "Bash(curl:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

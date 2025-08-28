@@ -23,6 +23,8 @@ import {
 import { motion } from "framer-motion"
 import { format, addDays, startOfDay, isToday, isTomorrow, addMinutes, setHours, setMinutes } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
+import { NotificationService } from '@/lib/notification-service'
+import { useSession } from 'next-auth/react'
 
 interface Mentor {
   id: number
@@ -85,6 +87,7 @@ interface BookingFormData {
 }
 
 export default function StudentBookingInterface({ studentId }: { studentId: number }) {
+  const { data: session } = useSession()
   const [mentors, setMentors] = useState<Mentor[]>([])
   const [schedules, setSchedules] = useState<MentorSchedule[]>([])
   const [availabilities, setAvailabilities] = useState<AvailabilitySlot[]>([])
@@ -369,6 +372,23 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
           }
         } catch (calendarError) {
           console.warn('Failed to create calendar event:', calendarError)
+        }
+
+        // Send notification to mentor
+        if (selectedMentor && session?.user) {
+          try {
+            await NotificationService.notifyBookingCreated(
+              session.user.id,
+              session.user.name || 'Student',
+              selectedMentor.id.toString(),
+              bookingData.id.toString(),
+              selectedSchedule.title,
+              bookingDate.toISOString()
+            )
+            console.log('Notification sent to mentor')
+          } catch (notificationError) {
+            console.warn('Failed to send notification:', notificationError)
+          }
         }
 
         await fetchData() // Refresh data
