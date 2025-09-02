@@ -26,6 +26,7 @@ import { id as localeId } from 'date-fns/locale'
 import { NotificationService } from '@/lib/notification-service'
 import { useSession } from 'next-auth/react'
 import { useMeetingGeneration } from '@/hooks/useMeetingGeneration'
+import { AdminService, AdminPricingRule } from '@/lib/admin-service'
 
 interface Mentor {
   id: number
@@ -44,10 +45,11 @@ interface MentorSchedule {
   description: string
   duration: number
   maxCapacity: number
-  price: number
+  materials: string[]
   meetingType: 'online' | 'offline'
   meetingProvider: 'zoom' | 'google-meet'
   meetingLink: string
+  locationId?: number
   timezone: string
   isActive: boolean
 }
@@ -104,6 +106,9 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
   const [availableDates, setAvailableDates] = useState<Date[]>([])
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([])
   
+  // Admin pricing rules
+  const [adminPricingRules, setAdminPricingRules] = useState<AdminPricingRule[]>([])
+  
   const [bookingForm, setBookingForm] = useState<BookingFormData>({
     scheduleId: 0,
     mentorId: 0,
@@ -114,7 +119,28 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
 
   useEffect(() => {
     fetchData()
+    fetchAdminPricingRules()
   }, [])
+
+  const fetchAdminPricingRules = async () => {
+    try {
+      const rules = await AdminService.getPricingRules()
+      setAdminPricingRules(rules)
+    } catch (error) {
+      console.error('Error fetching admin pricing rules:', error)
+    }
+  }
+
+  const calculateSchedulePrice = (schedule: MentorSchedule): number => {
+    if (!schedule || !schedule.materials || schedule.materials.length === 0) return 150000 // Default price
+    
+    return AdminService.calculateSessionPrice(adminPricingRules, {
+      materials: schedule.materials,
+      duration: schedule.duration,
+      isOnline: schedule.meetingType === 'online',
+      sessionType: 'mentoring'
+    })
+  }
 
   useEffect(() => {
     if (selectedSchedule && showBookingDialog) {
@@ -384,7 +410,7 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
         meetingProvider: selectedSchedule.meetingProvider,
         meetingPassword: generatedMeetingData?.password,
         studentNotes: bookingForm.notes,
-        price: selectedSchedule.price,
+        price: calculateSchedulePrice(selectedSchedule),
         paymentStatus: 'pending',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -535,7 +561,7 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
                 type: isAvailable ? 'available' : 'booked',
                 capacity: selectedSchedule.maxCapacity,
                 currentBookings: currentBookings,
-                price: selectedSchedule.price,
+                price: calculateSchedulePrice(selectedSchedule),
                 mentorName: selectedMentor?.name,
                 timeSlot: timeString,
                 date: dateString
@@ -674,6 +700,23 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
                           >
                             <div className="flex-1">
                               <p className="font-medium text-sm">{schedule.title}</p>
+                              
+                              {/* Materials Display */}
+                              {schedule.materials && schedule.materials.length > 0 && (
+                                <div className="mb-1">
+                                  <div className="flex flex-wrap gap-1">
+                                    {schedule.materials.slice(0, 3).map((material, index) => (
+                                      <span key={index} className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded text-xs">
+                                        {material}
+                                      </span>
+                                    ))}
+                                    {schedule.materials.length > 3 && (
+                                      <span className="text-xs text-muted-foreground">+{schedule.materials.length - 3}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                              
                               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                   <Clock className="h-3 w-3" />
@@ -685,7 +728,7 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
                                 </span>
                                 <span className="flex items-center gap-1">
                                   <DollarSign className="h-3 w-3" />
-                                  Rp {schedule.price.toLocaleString('id-ID')}
+                                  Rp {calculateSchedulePrice(schedule).toLocaleString('id-ID')}
                                 </span>
                               </div>
                             </div>
@@ -724,7 +767,7 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
           
           <div className="flex-1 overflow-y-auto min-h-0 p-6">
             {/* Session Info Bar */}
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-blue-600" />
@@ -736,7 +779,7 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
                 </div>
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-blue-600" />
-                  <span className="font-medium">Rp {selectedSchedule?.price.toLocaleString('id-ID')}</span>
+                  <span className="font-medium">Rp {calculateSchedulePrice(selectedSchedule!).toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {selectedSchedule?.meetingType === 'online' ? 
@@ -751,6 +794,20 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
                   </span>
                 </div>
               </div>
+              
+              {/* Materials covered in this session */}
+              {selectedSchedule?.materials && selectedSchedule.materials.length > 0 && (
+                <div>
+                  <span className="text-sm font-medium text-blue-800">Materials covered in this session:</span>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedSchedule.materials.map((material, index) => (
+                      <span key={index} className="bg-white text-blue-800 px-2 py-1 rounded text-sm border border-blue-200">
+                        {material}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Date Selection */}
@@ -934,7 +991,7 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
                       </h4>
                       <p className="text-sm text-green-600 mt-1">
                         Duration: {selectedSchedule?.duration} minutes • 
-                        Price: Rp {selectedSchedule?.price.toLocaleString('id-ID')}
+                        Price: Rp {calculateSchedulePrice(selectedSchedule!).toLocaleString('id-ID')}
                       </p>
                     </div>
                   </div>

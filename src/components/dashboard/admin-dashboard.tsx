@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Users, BookOpen, DollarSign, TrendingUp, Plus, Eye } from 'lucide-react'
+import { Users, BookOpen, DollarSign, TrendingUp, Plus, Eye, Settings, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 
@@ -39,6 +39,20 @@ const stats = [
 
 const quickActions = [
   {
+    title: 'Admin Management',
+    description: 'Kelola pricing, lokasi, dan event',
+    href: '/dashboard/admin',
+    icon: Settings,
+    color: 'bg-indigo-600'
+  },
+  {
+    title: 'Statistik & Analytics',
+    description: 'Lihat performa mentor dan pembayaran siswa',
+    href: '/dashboard/analytics',
+    icon: BarChart3,
+    color: 'bg-teal-600'
+  },
+  {
     title: 'Tambah Mentor',
     description: 'Tambahkan mentor baru ke platform',
     href: '/dashboard/tambah-mentor',
@@ -46,25 +60,11 @@ const quickActions = [
     color: 'bg-blue-600'
   },
   {
-    title: 'Tambah Kursus',
-    description: 'Buat kursus baru',
-    href: '/dashboard/tambah-kursus',
-    icon: Plus,
-    color: 'bg-green-600'
-  },
-  {
     title: 'Kelola Transaksi',
     description: 'Lihat dan kelola semua transaksi',
     href: '/dashboard/transaksi',
     icon: Eye,
     color: 'bg-purple-600'
-  },
-  {
-    title: 'Data Siswa',
-    description: 'Kelola data siswa',
-    href: '/dashboard/siswa',
-    icon: Eye,
-    color: 'bg-orange-600'
   }
 ]
 

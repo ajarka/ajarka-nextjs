@@ -1,4 +1,99 @@
 {
+  "admin_pricing_rules": [
+    {
+      "id": 1,
+      "name": "Frontend Development - Online",
+      "materials": ["HTML", "CSS", "JavaScript", "React", "Vue.js"],
+      "sessionType": "mentoring",
+      "meetingType": "online",
+      "studentPrice": 200000,
+      "mentorFeePercentage": 70,
+      "adminFeePercentage": 30,
+      "minDuration": 60,
+      "maxDuration": 180,
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "name": "Frontend Development - Offline",
+      "materials": ["HTML", "CSS", "JavaScript", "React", "Vue.js"],
+      "sessionType": "mentoring",
+      "meetingType": "offline",
+      "studentPrice": 250000,
+      "mentorFeePercentage": 70,
+      "adminFeePercentage": 30,
+      "minDuration": 60,
+      "maxDuration": 180,
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": 3,
+      "name": "Backend Development - Online",
+      "materials": ["Node.js", "Python", "Java", "PostgreSQL", "MongoDB"],
+      "sessionType": "mentoring",
+      "meetingType": "online",
+      "studentPrice": 220000,
+      "mentorFeePercentage": 70,
+      "adminFeePercentage": 30,
+      "minDuration": 60,
+      "maxDuration": 180,
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "admin_office_locations": [
+    {
+      "id": 1,
+      "name": "Ajarka Jakarta HQ",
+      "address": "Jl. Sudirman No. 123, Jakarta Pusat",
+      "city": "Jakarta",
+      "province": "DKI Jakarta",
+      "postalCode": "10220",
+      "capacity": 30,
+      "facilities": ["wifi", "projector", "whiteboard", "parking", "coffee"],
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "name": "Ajarka Bandung",
+      "address": "Jl. Braga No. 45, Bandung",
+      "city": "Bandung",
+      "province": "Jawa Barat",
+      "postalCode": "40111",
+      "capacity": 20,
+      "facilities": ["wifi", "projector", "whiteboard", "parking"],
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "admin_event_templates": [
+    {
+      "id": 1,
+      "title": "React Workshop for Beginners",
+      "description": "A comprehensive workshop covering React fundamentals",
+      "category": "Frontend Development",
+      "duration": 240,
+      "maxParticipants": 50,
+      "isOnline": true,
+      "materials": ["HTML", "CSS", "JavaScript", "React"],
+      "requirements": ["Basic JavaScript knowledge", "Computer with internet connection"],
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "admin_settings": [
+    {
+      "id": 1,
+      "mentorFeePercentage": 70,
+      "adminFeePercentage": 30,
+      "defaultSessionDuration": 60,
+      "maxSessionDuration": 240,
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
   "users": [
     {
       "id": "1",
@@ -367,9 +462,9 @@
       "description": "1-on-1 mentoring session untuk Frontend Development",
       "duration": 60,
       "maxCapacity": 5,
-      "price": 150000,
+      "materials": ["HTML", "CSS", "JavaScript", "React"],
       "meetingType": "online",
-      "meetingLink": "https://meet.google.com/abc-def-ghi",
+      "meetingProvider": "google-meet",
       "timezone": "Asia/Jakarta",
       "isActive": true,
       "createdAt": "2024-01-15T00:00:00.000Z",
@@ -382,9 +477,9 @@
       "description": "Complete full-stack web development mentoring",
       "duration": 90,
       "maxCapacity": 3,
-      "price": 200000,
+      "materials": ["React", "Node.js", "PostgreSQL"],
       "meetingType": "online",
-      "meetingLink": "https://meet.google.com/def-ghi-jkl",
+      "meetingProvider": "google-meet",
       "timezone": "Asia/Jakarta",
       "isActive": false,
       "createdAt": "2024-01-15T00:00:00.000Z",

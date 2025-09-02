@@ -33,6 +33,7 @@ import MentorScheduleCalendar from './mentor-schedule-calendar'
 import { NotificationService } from '@/lib/notification-service'
 import { useSession } from 'next-auth/react'
 import { useMeetingGeneration } from '@/hooks/useMeetingGeneration'
+import { AdminService, AdminPricingRule, AdminOfficeLocation } from '@/lib/admin-service'
 
 interface MentorSchedule {
   id?: number
@@ -40,10 +41,10 @@ interface MentorSchedule {
   description: string
   duration: number
   maxCapacity: number
-  price: number
+  materials: string[]
   meetingType: 'online' | 'offline'
   meetingProvider: 'zoom' | 'google-meet'
-  meetingLink: string
+  locationId?: number
   timezone: string
   isActive: boolean
 }
@@ -85,15 +86,20 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   
+  // Admin-controlled data
+  const [adminPricingRules, setAdminPricingRules] = useState<AdminPricingRule[]>([])
+  const [adminLocations, setAdminLocations] = useState<AdminOfficeLocation[]>([])
+  const [calculatedPrice, setCalculatedPrice] = useState<number>(0)
+  const [mentorFee, setMentorFee] = useState<number>(0)
+  
   const [newSchedule, setNewSchedule] = useState<MentorSchedule>({
     title: '',
     description: '',
     duration: 60,
     maxCapacity: 1,
-    price: 150000,
+    materials: [],
     meetingType: 'online',
     meetingProvider: 'google-meet',
-    meetingLink: '',
     timezone: 'Asia/Jakarta',
     isActive: true
   })
@@ -108,7 +114,45 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
 
   useEffect(() => {
     fetchSchedules()
+    fetchAdminSettings()
   }, [mentorId])
+
+  useEffect(() => {
+    // Recalculate pricing when schedule data changes
+    if (newSchedule.materials.length > 0 && newSchedule.duration > 0) {
+      calculatePricing()
+    }
+  }, [newSchedule.materials, newSchedule.duration, newSchedule.meetingType, adminPricingRules])
+
+  const fetchAdminSettings = async () => {
+    try {
+      const [pricingRules, locations] = await Promise.all([
+        AdminService.getPricingRules(),
+        AdminService.getOfficeLocations()
+      ])
+      setAdminPricingRules(pricingRules)
+      setAdminLocations(locations)
+    } catch (error) {
+      console.error('Error fetching admin settings:', error)
+    }
+  }
+
+  const calculatePricing = () => {
+    if (adminPricingRules.length === 0 || newSchedule.materials.length === 0) return
+
+    const price = AdminService.calculateSessionPrice(adminPricingRules, {
+      materials: newSchedule.materials,
+      duration: newSchedule.duration,
+      isOnline: newSchedule.meetingType === 'online',
+      sessionType: 'mentoring'
+    })
+
+    const settings = AdminService.getSettings()
+    const mentorFeeAmount = AdminService.calculateMentorFee(price, settings.mentorFeePercentage)
+
+    setCalculatedPrice(price)
+    setMentorFee(mentorFeeAmount)
+  }
 
   const fetchSchedules = async () => {
     try {
@@ -186,13 +230,14 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
           description: '',
           duration: 60,
           maxCapacity: 1,
-          price: 150000,
+          materials: [],
           meetingType: 'online',
           meetingProvider: 'google-meet',
-          meetingLink: '',
           timezone: 'Asia/Jakarta',
           isActive: true
         })
+        setCalculatedPrice(0)
+        setMentorFee(0)
         setIsDialogOpen(false)
       }
     } catch (error) {
@@ -418,39 +463,86 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="capacity">Maksimal Peserta</Label>
-                  <Input
-                    id="capacity"
-                    type="number"
-                    min="1"
-                    max="20"
-                    value={newSchedule.maxCapacity}
-                    onChange={(e) => setNewSchedule({ ...newSchedule, maxCapacity: parseInt(e.target.value) })}
-                  />
+                  <Label>Materials to Cover</Label>
+                  <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-md min-h-[100px]">
+                    {adminPricingRules.map((rule) => 
+                      rule.materials.map((material) => (
+                        <button
+                          key={material}
+                          type="button"
+                          onClick={() => {
+                            const isSelected = newSchedule.materials.includes(material)
+                            if (isSelected) {
+                              setNewSchedule({
+                                ...newSchedule,
+                                materials: newSchedule.materials.filter(m => m !== material)
+                              })
+                            } else {
+                              setNewSchedule({
+                                ...newSchedule,
+                                materials: [...newSchedule.materials, material]
+                              })
+                            }
+                          }}
+                          className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                            newSchedule.materials.includes(material)
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {material}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500">Select materials that will be covered in this session. Pricing is automatically calculated based on admin settings.</p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="price">Harga (Rp)</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    value={newSchedule.price}
-                    onChange={(e) => setNewSchedule({ ...newSchedule, price: parseInt(e.target.value) })}
-                  />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="capacity">Maksimal Peserta</Label>
+                    <Input
+                      id="capacity"
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={newSchedule.maxCapacity}
+                      onChange={(e) => setNewSchedule({ ...newSchedule, maxCapacity: parseInt(e.target.value) })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="meetingType">Tipe Meeting</Label>
+                    <Select value={newSchedule.meetingType} onValueChange={(value: 'online' | 'offline') => setNewSchedule({ ...newSchedule, meetingType: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="online">Online</SelectItem>
+                        <SelectItem value="offline">Tatap Muka</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="meetingType">Tipe Meeting</Label>
-                  <Select value={newSchedule.meetingType} onValueChange={(value: 'online' | 'offline') => setNewSchedule({ ...newSchedule, meetingType: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="online">Online</SelectItem>
-                      <SelectItem value="offline">Tatap Muka</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+
+                {/* Admin-Calculated Pricing Display */}
+                {calculatedPrice > 0 && (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                      <div className="w-full">
+                        <h4 className="font-medium text-green-800">Your Earnings per Session</h4>
+                        <div className="mt-2 text-center">
+                          <span className="text-2xl font-bold text-green-600">Rp {mentorFee.toLocaleString('id-ID')}</span>
+                          <p className="text-xs text-green-700 mt-1">
+                            Dihitung otomatis oleh admin (70% dari harga siswa)
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {newSchedule.meetingType === 'online' && (
@@ -492,13 +584,26 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
 
               {newSchedule.meetingType === 'offline' && (
                 <div className="space-y-2">
-                  <Label htmlFor="meetingLocation">Lokasi Meeting</Label>
-                  <Input
-                    id="meetingLocation"
-                    value={newSchedule.meetingLink}
-                    onChange={(e) => setNewSchedule({ ...newSchedule, meetingLink: e.target.value })}
-                    placeholder="Alamat atau lokasi meeting offline"
-                  />
+                  <Label htmlFor="location">Office Location</Label>
+                  <Select 
+                    value={newSchedule.locationId?.toString() || ''} 
+                    onValueChange={(value) => setNewSchedule({ ...newSchedule, locationId: parseInt(value) })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select an office location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {adminLocations.map((location) => (
+                        <SelectItem key={location.id} value={location.id.toString()}>
+                          <div>
+                            <div className="font-medium">{location.name}</div>
+                            <div className="text-sm text-gray-500">{location.address}</div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500">Select from admin-managed office locations for offline sessions.</p>
                 </div>
               )}
             </div>
@@ -578,22 +683,61 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{schedule.duration} menit</span>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{schedule.duration} menit</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Max {schedule.maxCapacity} orang</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {schedule.meetingType === 'online' ? <Video className="h-4 w-4 text-muted-foreground" /> : <Globe className="h-4 w-4 text-muted-foreground" />}
+                        <span className="text-sm capitalize">{schedule.meetingType}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Admin Pricing</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">Max {schedule.maxCapacity} orang</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">Rp {schedule.price.toLocaleString('id-ID')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {schedule.meetingType === 'online' ? <Video className="h-4 w-4 text-muted-foreground" /> : <Globe className="h-4 w-4 text-muted-foreground" />}
-                      <span className="text-sm capitalize">{schedule.meetingType}</span>
+
+                    {/* Materials Display */}
+                    {schedule.materials && schedule.materials.length > 0 && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-700">Materials: </span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {schedule.materials.map((material, index) => (
+                            <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                              {material}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Mentor Fee Information */}
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="text-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="text-green-800 font-medium">Your Earnings per Session:</span>
+                          <span className="font-bold text-lg text-green-600">
+                            {AdminService.calculateMentorFee(
+                              AdminService.calculateSessionPrice(adminPricingRules, {
+                                materials: schedule.materials || [],
+                                duration: schedule.duration,
+                                isOnline: schedule.meetingType === 'online',
+                                sessionType: 'mentoring'
+                              }),
+                              AdminService.getSettings().mentorFeePercentage
+                            ).toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+                          </span>
+                        </div>
+                        <p className="text-xs text-green-600 mt-1">
+                          Fee dihitung otomatis berdasarkan admin pricing (70% dari harga siswa)
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
