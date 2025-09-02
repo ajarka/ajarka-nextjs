@@ -19,6 +19,8 @@ import {
 import PricingManagement from './pricing-management-fixed'
 import LocationManagement from './location-management'
 import EventManagement from './event-management'
+import BundleManagement from './bundle-management'
+import SubscriptionTracking from './subscription-tracking'
 import { AdminService, AdminPricingRule, AdminOfficeLocation } from '@/lib/admin-service'
 
 export default function AdminDashboard() {
@@ -230,7 +232,7 @@ export default function AdminDashboard() {
 
       {/* Management Tabs */}
       <Tabs defaultValue="pricing" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="pricing" className="flex items-center gap-2">
             <DollarSign className="h-4 w-4" />
             Pricing Management
@@ -242,6 +244,14 @@ export default function AdminDashboard() {
           <TabsTrigger value="events" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             Event Management
+          </TabsTrigger>
+          <TabsTrigger value="bundles" className="flex items-center gap-2">
+            <Building className="h-4 w-4" />
+            Bundle Management
+          </TabsTrigger>
+          <TabsTrigger value="subscriptions" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Subscriptions
           </TabsTrigger>
         </TabsList>
 
@@ -255,6 +265,14 @@ export default function AdminDashboard() {
 
         <TabsContent value="events">
           <EventManagement onEventUpdate={fetchData} />
+        </TabsContent>
+
+        <TabsContent value="bundles">
+          <BundleManagement />
+        </TabsContent>
+
+        <TabsContent value="subscriptions">
+          <SubscriptionTracking />
         </TabsContent>
       </Tabs>
     </div>

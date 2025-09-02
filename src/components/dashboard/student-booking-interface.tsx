@@ -23,10 +23,26 @@ import {
 import { motion } from "framer-motion"
 import { format, addDays, startOfDay, isToday, isTomorrow, addMinutes, setHours, setMinutes } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
+
+// Safe date parsing utility
+const safeParseDate = (dateInput: string | Date | null | undefined): Date | null => {
+  if (!dateInput) return null
+  
+  const date = new Date(dateInput)
+  if (isNaN(date.getTime())) {
+    console.warn('Invalid date encountered:', dateInput)
+    return null
+  }
+  
+  return date
+}
 import { NotificationService } from '@/lib/notification-service'
 import { useSession } from 'next-auth/react'
 import { useMeetingGeneration } from '@/hooks/useMeetingGeneration'
 import { AdminService, AdminPricingRule } from '@/lib/admin-service'
+import { PaymentService, PaymentRequest } from '@/lib/payment-service'
+import { BundleService, BundlePackage, StudentSubscription } from '@/lib/bundle-service'
+import PaymentButton from '@/components/payment/payment-button'
 
 interface Mentor {
   id: number
@@ -109,6 +125,14 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
   // Admin pricing rules
   const [adminPricingRules, setAdminPricingRules] = useState<AdminPricingRule[]>([])
   
+  // Bundle and subscription state
+  const [bundlePackages, setBundlePackages] = useState<BundlePackage[]>([])
+  const [activeSubscription, setActiveSubscription] = useState<StudentSubscription | null>(null)
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'per_booking' | 'bundle'>('per_booking')
+  const [selectedBundle, setSelectedBundle] = useState<BundlePackage | null>(null)
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false)
+  const [currentBookingData, setCurrentBookingData] = useState<any>(null)
+  
   const [bookingForm, setBookingForm] = useState<BookingFormData>({
     scheduleId: 0,
     mentorId: 0,
@@ -120,6 +144,7 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
   useEffect(() => {
     fetchData()
     fetchAdminPricingRules()
+    fetchBundleData()
   }, [])
 
   const fetchAdminPricingRules = async () => {
@@ -128,6 +153,20 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
       setAdminPricingRules(rules)
     } catch (error) {
       console.error('Error fetching admin pricing rules:', error)
+    }
+  }
+
+  const fetchBundleData = async () => {
+    try {
+      const [bundles, subscription] = await Promise.all([
+        BundleService.getAllBundlePackages(),
+        BundleService.getActiveSubscription(studentId)
+      ])
+      
+      setBundlePackages(bundles)
+      setActiveSubscription(subscription)
+    } catch (error) {
+      console.error('Error fetching bundle data:', error)
     }
   }
 
@@ -174,7 +213,13 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
       // Fetch existing bookings
       const bookingsResponse = await fetch('http://localhost:3001/bookings')
       const bookingsData = await bookingsResponse.json()
-      setBookings(bookingsData)
+      
+      // Filter out bookings with invalid dates
+      const validBookings = bookingsData.filter((booking: Booking) => {
+        return safeParseDate(booking.bookingDate) !== null
+      })
+      
+      setBookings(validBookings)
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -249,7 +294,17 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
               return false
             }
             
+            // Validate booking date
+            if (!booking.bookingDate) {
+              return false
+            }
+            
             const bookingDate = new Date(booking.bookingDate)
+            if (isNaN(bookingDate.getTime())) {
+              console.warn('Invalid booking date found:', booking.bookingDate, 'for booking:', booking.id)
+              return false
+            }
+            
             return format(bookingDate, 'yyyy-MM-dd') === dateString && 
                    format(bookingDate, 'HH:mm') === timeString
           })
@@ -305,7 +360,17 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
               return false
             }
             
+            // Validate booking date
+            if (!booking.bookingDate) {
+              return false
+            }
+            
             const bookingDate = new Date(booking.bookingDate)
+            if (isNaN(bookingDate.getTime())) {
+              console.warn('Invalid booking date found:', booking.bookingDate, 'for booking:', booking.id)
+              return false
+            }
+            
             return format(bookingDate, 'yyyy-MM-dd') === dateString && 
                    format(bookingDate, 'HH:mm') === timeString
           })
@@ -348,6 +413,90 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
 
   const handleTimeSelect = (time: string) => {
     setBookingForm(prev => ({ ...prev, selectedTime: time }))
+  }
+
+  const handlePaymentSuccess = (transactionId: string) => {
+    setShowPaymentDialog(false)
+    setShowBookingDialog(false)
+    // Refresh data and show success message
+    fetchData()
+    fetchBundleData()
+    alert('Booking successful! Payment confirmed.')
+  }
+
+  const handlePaymentError = (error: string) => {
+    console.error('Payment error:', error)
+    alert(`Payment failed: ${error}`)
+  }
+
+  const processSubscriptionBooking = async () => {
+    if (!activeSubscription || !currentBookingData) return
+
+    try {
+      // Create the actual booking
+      const response = await fetch('http://localhost:3001/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...currentBookingData,
+          paymentStatus: 'paid',
+          status: 'confirmed'
+        })
+      })
+
+      if (response.ok) {
+        const bookingData = await response.json()
+        
+        // Use one session from subscription
+        await BundleService.useSubscriptionSession(activeSubscription.id, bookingData.id)
+        
+        // Send notifications and create calendar event
+        await handlePostBookingActions(bookingData)
+        
+        setShowBookingDialog(false)
+        fetchData()
+        fetchBundleData()
+        alert('Session booked using your subscription!')
+      }
+    } catch (error) {
+      console.error('Error processing subscription booking:', error)
+      alert('Failed to process subscription booking')
+    }
+  }
+
+  const handlePostBookingActions = async (bookingData: any) => {
+    // Create calendar event
+    try {
+      const calendarResponse = await fetch('/api/calendar/create-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId: bookingData.id })
+      })
+      
+      if (calendarResponse.ok) {
+        console.log('Calendar event created successfully')
+      }
+    } catch (calendarError) {
+      console.warn('Failed to create calendar event:', calendarError)
+    }
+
+    // Send notifications
+    if (selectedMentor && session?.user) {
+      try {
+        await NotificationService.notifyBookingCreated(
+          session.user.id,
+          session.user.name || 'Student',
+          selectedMentor.id.toString(),
+          bookingData.id.toString(),
+          selectedSchedule!.title,
+          bookingData.bookingDate,
+          bookingData.meetingLink,
+          selectedSchedule!.meetingProvider
+        )
+      } catch (notificationError) {
+        console.warn('Failed to send notification:', notificationError)
+      }
+    }
   }
 
   const createBooking = async () => {
@@ -397,6 +546,7 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
         }
       }
 
+      const bookingPrice = calculateSchedulePrice(selectedSchedule)
       const newBooking = {
         mentorId: bookingForm.mentorId,
         studentId,
@@ -410,12 +560,29 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
         meetingProvider: selectedSchedule.meetingProvider,
         meetingPassword: generatedMeetingData?.password,
         studentNotes: bookingForm.notes,
-        price: calculateSchedulePrice(selectedSchedule),
+        price: bookingPrice,
         paymentStatus: 'pending',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
 
+      // Store booking data for payment processing
+      setCurrentBookingData(newBooking)
+
+      // Check if student wants to use subscription
+      if (selectedPaymentMethod === 'bundle' && activeSubscription && activeSubscription.remainingSessions > 0) {
+        await processSubscriptionBooking()
+        return
+      }
+
+      // Show payment dialog for per-booking payment
+      if (selectedPaymentMethod === 'per_booking') {
+        setShowPaymentDialog(true)
+        setBooking(false)
+        return
+      }
+
+      // This should not happen, but handle as fallback
       const response = await fetch('http://localhost:3001/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -424,74 +591,37 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
 
       if (response.ok) {
         const bookingData = await response.json()
-        
-        // Create calendar event
-        try {
-          const calendarResponse = await fetch('/api/calendar/create-event', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ bookingId: bookingData.id })
-          })
-          
-          if (calendarResponse.ok) {
-            console.log('Calendar event created successfully')
-          }
-        } catch (calendarError) {
-          console.warn('Failed to create calendar event:', calendarError)
-        }
-
-        // Send notification to mentor
-        if (selectedMentor && session?.user) {
-          try {
-            await NotificationService.notifyBookingCreated(
-              session.user.id,
-              session.user.name || 'Student',
-              selectedMentor.id.toString(),
-              bookingData.id.toString(),
-              selectedSchedule.title,
-              bookingDate.toISOString(),
-              meetingLink,
-              selectedSchedule.meetingProvider
-            )
-            console.log('Notification sent to mentor')
-          } catch (notificationError) {
-            console.warn('Failed to send notification:', notificationError)
-          }
-        }
-
-        // Send separate meeting link notification if generated
-        if (generatedMeetingData && selectedMentor && session?.user) {
-          try {
-            await NotificationService.notifyMeetingLinkGenerated(
-              selectedMentor.id.toString(),
-              session.user.id,
-              bookingData.id.toString(),
-              selectedSchedule.title,
-              generatedMeetingData.joinUrl,
-              selectedSchedule.meetingProvider,
-              bookingDate.toISOString()
-            )
-            console.log('Meeting link notification sent')
-          } catch (notificationError) {
-            console.warn('Failed to send meeting link notification:', notificationError)
-          }
-        }
-
-        await fetchData() // Refresh data
+        await handlePostBookingActions(bookingData)
+        await fetchData()
         setShowBookingDialog(false)
-        setBookingForm({
-          scheduleId: 0,
-          mentorId: 0,
-          selectedDate: null,
-          selectedTime: '',
-          notes: ''
-        })
+        resetBookingForm()
       }
     } catch (error) {
       console.error('Error creating booking:', error)
     } finally {
       setBooking(false)
     }
+  }
+
+  const resetBookingForm = () => {
+    setBookingForm({
+      scheduleId: 0,
+      mentorId: 0,
+      selectedDate: null,
+      selectedTime: '',
+      notes: ''
+    })
+    setSelectedPaymentMethod('per_booking')
+    setSelectedBundle(null)
+    setCurrentBookingData(null)
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(amount)
   }
 
   const getDateLabel = (date: Date) => {
@@ -542,7 +672,12 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
                 return false
               }
               
-              const bookingDate = new Date(booking.bookingDate)
+              // Validate booking date
+              const bookingDate = safeParseDate(booking.bookingDate)
+              if (!bookingDate) {
+                return false
+              }
+              
               return format(bookingDate, 'yyyy-MM-dd') === dateString && 
                      format(bookingDate, 'HH:mm') === timeString
             })
@@ -766,6 +901,102 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
           </DialogHeader>
           
           <div className="flex-1 overflow-y-auto min-h-0 p-6">
+            {/* Payment Method Selection */}
+            {(activeSubscription || bundlePackages.length > 0) && (
+              <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
+                <h4 className="font-semibold text-purple-800 mb-3">Payment Options</h4>
+                
+                <div className="space-y-3">
+                  {/* Per Booking Option */}
+                  <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-white/50 transition-colors">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="per_booking"
+                      checked={selectedPaymentMethod === 'per_booking'}
+                      onChange={(e) => setSelectedPaymentMethod(e.target.value as any)}
+                      className="text-purple-600"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium">Pay Per Session</p>
+                      <p className="text-sm text-gray-600">
+                        {formatCurrency(calculateSchedulePrice(selectedSchedule!))} per session
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Active Subscription Option */}
+                  {activeSubscription && activeSubscription.remainingSessions > 0 && (
+                    <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-white/50 transition-colors border-green-300 bg-green-50">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="bundle"
+                        checked={selectedPaymentMethod === 'bundle'}
+                        onChange={(e) => setSelectedPaymentMethod(e.target.value as any)}
+                        className="text-green-600"
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium text-green-800">Use Active Subscription</p>
+                        <p className="text-sm text-green-600">
+                          {activeSubscription.bundleName} - {activeSubscription.remainingSessions} sessions remaining
+                        </p>
+                        <div className="mt-2 bg-green-200 rounded-full h-2">
+                          <div 
+                            className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${(activeSubscription.remainingSessions / activeSubscription.totalSessions) * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                      <Badge className="bg-green-600 text-white">FREE</Badge>
+                    </label>
+                  )}
+
+                  {/* Bundle Purchase Options */}
+                  {bundlePackages.length > 0 && !activeSubscription && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-purple-700">Or purchase a bundle:</p>
+                      {bundlePackages.slice(0, 3).map((bundle) => (
+                        <label key={bundle.id} className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-white/50 transition-colors border-blue-300 bg-blue-50">
+                          <input
+                            type="radio"
+                            name="paymentMethod"
+                            value={`bundle_${bundle.id}`}
+                            checked={selectedBundle?.id === bundle.id}
+                            onChange={(e) => {
+                              setSelectedBundle(bundle)
+                              setSelectedPaymentMethod('bundle')
+                            }}
+                            className="text-blue-600"
+                          />
+                          <div className="flex-1">
+                            <p className="font-medium text-blue-800">{bundle.name}</p>
+                            <p className="text-sm text-blue-600">
+                              {bundle.sessionCount} sessions • {bundle.validityDays} days validity
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              {bundle.discountPercentage > 0 && (
+                                <span className="text-xs line-through text-gray-500">
+                                  {formatCurrency(bundle.originalPrice)}
+                                </span>
+                              )}
+                              <span className="font-bold text-blue-800">
+                                {formatCurrency(bundle.finalPrice)}
+                              </span>
+                              {bundle.discountPercentage > 0 && (
+                                <Badge className="bg-red-500 text-white text-xs">
+                                  -{bundle.discountPercentage}%
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             {/* Session Info Bar */}
             <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -931,7 +1162,12 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
                           return false
                         }
                         
-                        const bookingDate = new Date(booking.bookingDate)
+                        // Validate booking date
+                        const bookingDate = safeParseDate(booking.bookingDate)
+                        if (!bookingDate) {
+                          return false
+                        }
+                        
                         return format(bookingDate, 'yyyy-MM-dd') === dateString && 
                                format(bookingDate, 'HH:mm') === time
                       })
@@ -1066,11 +1302,117 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
               ) : (
                 <>
                   <CheckCircle2 className="h-4 w-4" />
-                  Book Session
+                  {selectedPaymentMethod === 'bundle' && activeSubscription ? 'Book with Subscription' : 'Continue to Payment'}
                 </>
               )}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Dialog */}
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Complete Payment</DialogTitle>
+            <DialogDescription>
+              Secure payment for your mentoring session
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            {currentBookingData && selectedSchedule && selectedMentor && session?.user && (
+              <>                
+                {selectedBundle ? (
+                  <PaymentButton
+                    paymentRequest={{
+                      studentId,
+                      mentorId: 0, // Bundle payments are not mentor-specific
+                      scheduleId: 0,
+                      sessionTitle: `Bundle: ${selectedBundle.name}`,
+                      amount: selectedBundle.finalPrice,
+                      mentorFee: 0,
+                      adminFee: selectedBundle.finalPrice,
+                      bookingDetails: {
+                        date: format(currentBookingData.bookingDate, 'yyyy-MM-dd'),
+                        time: format(currentBookingData.bookingDate, 'HH:mm'),
+                        duration: selectedBundle.sessionCount * selectedSchedule.duration,
+                        meetingType: 'bundle',
+                        materials: selectedBundle.features,
+                        notes: `Bundle subscription: ${selectedBundle.description}`
+                      },
+                      studentDetails: {
+                        name: session.user.name || 'Student',
+                        email: session.user.email || '',
+                        phone: '+6281234567890' // You might want to get this from user profile
+                      }
+                    }}
+                    onPaymentSuccess={(transactionId) => {
+                      // Create subscription after successful bundle payment
+                      BundleService.createSubscription({
+                        studentId,
+                        bundlePackage: selectedBundle!,
+                        transactionId
+                      }).then(() => {
+                        handlePaymentSuccess(transactionId)
+                        fetchBundleData() // Refresh bundle data
+                      })
+                    }}
+                    onPaymentError={handlePaymentError}
+                  />
+                ) : (
+                  <PaymentButton
+                    paymentRequest={{
+                      studentId: currentBookingData.studentId,
+                      mentorId: currentBookingData.mentorId,
+                      scheduleId: currentBookingData.scheduleId,
+                      sessionTitle: selectedSchedule.title,
+                      amount: currentBookingData.price,
+                      mentorFee: Math.round(currentBookingData.price * 0.7),
+                      adminFee: Math.round(currentBookingData.price * 0.3),
+                      bookingDetails: {
+                        date: format(new Date(currentBookingData.bookingDate), 'yyyy-MM-dd'),
+                        time: format(new Date(currentBookingData.bookingDate), 'HH:mm'),
+                        duration: currentBookingData.duration,
+                        meetingType: selectedSchedule.meetingType,
+                        materials: selectedSchedule.materials,
+                        notes: currentBookingData.studentNotes
+                      },
+                      studentDetails: {
+                        name: session.user.name || 'Student',
+                        email: session.user.email || '',
+                        phone: '+6281234567890'
+                      }
+                    }}
+                    onPaymentSuccess={async (transactionId) => {
+                      try {
+                        // Create the actual booking after successful payment
+                        const response = await fetch('http://localhost:3001/bookings', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            ...currentBookingData,
+                            paymentStatus: 'paid',
+                            status: 'confirmed',
+                            transactionId
+                          })
+                        })
+
+                        if (response.ok) {
+                          const bookingData = await response.json()
+                          await handlePostBookingActions(bookingData)
+                          handlePaymentSuccess(transactionId)
+                        }
+                      } catch (error) {
+                        handlePaymentError('Failed to create booking after payment')
+                      }
+                    }}
+                    onPaymentError={handlePaymentError}
+                  />
+                )}
+              </>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

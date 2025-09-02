@@ -1,9 +1,180 @@
 {
+  "bundle_packages": [
+    {
+      "id": "BUNDLE-1734904800000",
+      "name": "Monthly Mentoring Package",
+      "description": "Perfect for consistent learning with 8 sessions per month",
+      "type": "monthly",
+      "sessionCount": 8,
+      "originalPrice": 1600000,
+      "discountPercentage": 15,
+      "finalPrice": 1360000,
+      "validityDays": 35,
+      "isActive": true,
+      "features": [
+        "8 mentoring sessions",
+        "Flexible scheduling",
+        "All skill categories",
+        "Online & offline support",
+        "Priority booking"
+      ],
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    },
+    {
+      "id": "BUNDLE-1734904800001",
+      "name": "Quarterly Learning Bundle",
+      "description": "Intensive 3-month learning journey with significant savings",
+      "type": "quarterly",
+      "sessionCount": 24,
+      "originalPrice": 4800000,
+      "discountPercentage": 25,
+      "finalPrice": 3600000,
+      "validityDays": 100,
+      "isActive": true,
+      "features": [
+        "24 mentoring sessions",
+        "3-month validity",
+        "Progress tracking",
+        "Dedicated mentor assignment",
+        "Certificate of completion",
+        "Free consultation calls"
+      ],
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    },
+    {
+      "id": "BUNDLE-1734904800002",
+      "name": "Starter Pack (5 Sessions)",
+      "description": "Great for trying out our mentoring services",
+      "type": "session_pack",
+      "sessionCount": 5,
+      "originalPrice": 1000000,
+      "discountPercentage": 10,
+      "finalPrice": 900000,
+      "validityDays": 30,
+      "isActive": true,
+      "features": [
+        "5 mentoring sessions",
+        "30-day validity",
+        "All skill categories",
+        "Basic support"
+      ],
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    }
+  ],
+  "discount_rules": [
+    {
+      "id": "DISCOUNT-1734904800000",
+      "name": "Bulk Session Discount",
+      "description": "10% off for 5 or more sessions",
+      "type": "percentage",
+      "value": 10,
+      "minSessions": 5,
+      "maxSessions": 9,
+      "isActive": true,
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    },
+    {
+      "id": "DISCOUNT-1734904800001",
+      "name": "Premium Bulk Discount",
+      "description": "20% off for 10 or more sessions",
+      "type": "percentage",
+      "value": 20,
+      "minSessions": 10,
+      "isActive": true,
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    },
+    {
+      "id": "DISCOUNT-1734904800002",
+      "name": "Early Bird Fixed Discount",
+      "description": "50,000 IDR off for 3-4 sessions",
+      "type": "fixed_amount",
+      "value": 50000,
+      "minSessions": 3,
+      "maxSessions": 4,
+      "isActive": true,
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    }
+  ],
+  "student_subscriptions": [
+    {
+      "id": "SUB-3-1734904800000",
+      "studentId": 3,
+      "bundleId": "BUNDLE-1734904800000",
+      "bundleName": "Monthly Mentoring Package",
+      "totalSessions": 8,
+      "usedSessions": 2,
+      "remainingSessions": 6,
+      "originalPrice": 1600000,
+      "paidPrice": 1360000,
+      "discountAmount": 240000,
+      "purchaseDate": "2024-12-15T10:00:00.000Z",
+      "expiryDate": "2025-01-19T10:00:00.000Z",
+      "status": "active",
+      "transactions": [
+        "AJARKA-1734904800000-3",
+        "BOOKING-AJARKA-1734904800001-3"
+      ],
+      "createdAt": "2024-12-15T10:00:00.000Z",
+      "updatedAt": "2024-12-20T14:30:00.000Z"
+    },
+    {
+      "id": "SUB-4-1734904800001",
+      "studentId": 4,
+      "bundleId": "BUNDLE-1734904800002",
+      "bundleName": "Starter Pack (5 Sessions)",
+      "totalSessions": 5,
+      "usedSessions": 1,
+      "remainingSessions": 4,
+      "originalPrice": 1000000,
+      "paidPrice": 900000,
+      "discountAmount": 100000,
+      "purchaseDate": "2024-12-20T15:00:00.000Z",
+      "expiryDate": "2025-01-19T15:00:00.000Z",
+      "status": "active",
+      "transactions": [
+        "AJARKA-1734904800002-4"
+      ],
+      "createdAt": "2024-12-20T15:00:00.000Z",
+      "updatedAt": "2024-12-20T15:00:00.000Z"
+    },
+    {
+      "id": "SUB-5-1734904800002",
+      "studentId": 5,
+      "bundleId": "BUNDLE-1734904800001",
+      "bundleName": "Quarterly Learning Bundle",
+      "totalSessions": 24,
+      "usedSessions": 24,
+      "remainingSessions": 0,
+      "originalPrice": 4800000,
+      "paidPrice": 3600000,
+      "discountAmount": 1200000,
+      "purchaseDate": "2024-09-15T10:00:00.000Z",
+      "expiryDate": "2024-12-24T10:00:00.000Z",
+      "status": "expired",
+      "transactions": [
+        "AJARKA-1726401600000-5"
+      ],
+      "createdAt": "2024-09-15T10:00:00.000Z",
+      "updatedAt": "2024-12-24T10:00:00.000Z"
+    }
+  ],
   "admin_pricing_rules": [
     {
       "id": 1,
       "name": "Frontend Development - Online",
-      "materials": ["HTML", "CSS", "JavaScript", "React", "Vue.js"],
+      "materials": [
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "React",
+        "Vue.js"
+      ],
       "sessionType": "mentoring",
       "meetingType": "online",
       "studentPrice": 200000,
@@ -17,7 +188,13 @@
     {
       "id": 2,
       "name": "Frontend Development - Offline",
-      "materials": ["HTML", "CSS", "JavaScript", "React", "Vue.js"],
+      "materials": [
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "React",
+        "Vue.js"
+      ],
       "sessionType": "mentoring",
       "meetingType": "offline",
       "studentPrice": 250000,
@@ -31,7 +208,13 @@
     {
       "id": 3,
       "name": "Backend Development - Online",
-      "materials": ["Node.js", "Python", "Java", "PostgreSQL", "MongoDB"],
+      "materials": [
+        "Node.js",
+        "Python",
+        "Java",
+        "PostgreSQL",
+        "MongoDB"
+      ],
       "sessionType": "mentoring",
       "meetingType": "online",
       "studentPrice": 220000,
@@ -52,7 +235,13 @@
       "province": "DKI Jakarta",
       "postalCode": "10220",
       "capacity": 30,
-      "facilities": ["wifi", "projector", "whiteboard", "parking", "coffee"],
+      "facilities": [
+        "wifi",
+        "projector",
+        "whiteboard",
+        "parking",
+        "coffee"
+      ],
       "isActive": true,
       "createdAt": "2024-01-01T00:00:00.000Z"
     },
@@ -64,7 +253,12 @@
       "province": "Jawa Barat",
       "postalCode": "40111",
       "capacity": 20,
-      "facilities": ["wifi", "projector", "whiteboard", "parking"],
+      "facilities": [
+        "wifi",
+        "projector",
+        "whiteboard",
+        "parking"
+      ],
       "isActive": true,
       "createdAt": "2024-01-01T00:00:00.000Z"
     }
@@ -78,8 +272,16 @@
       "duration": 240,
       "maxParticipants": 50,
       "isOnline": true,
-      "materials": ["HTML", "CSS", "JavaScript", "React"],
-      "requirements": ["Basic JavaScript knowledge", "Computer with internet connection"],
+      "materials": [
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "React"
+      ],
+      "requirements": [
+        "Basic JavaScript knowledge",
+        "Computer with internet connection"
+      ],
       "isActive": true,
       "createdAt": "2024-01-01T00:00:00.000Z"
     }
@@ -92,6 +294,249 @@
       "defaultSessionDuration": 60,
       "maxSessionDuration": 240,
       "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "payment_transactions": [
+    {
+      "id": "AJARKA-1709544000000-3",
+      "orderId": "AJARKA-1709544000000-3",
+      "studentId": 3,
+      "mentorId": 2,
+      "scheduleId": 1,
+      "sessionTitle": "Frontend Mentoring Session",
+      "amount": 200000,
+      "mentorFee": 140000,
+      "adminFee": 60000,
+      "status": "paid",
+      "paymentMethod": "bank_transfer",
+      "midtransTransactionId": "MIDTRANS_1709544000001",
+      "midtransToken": "midtrans_AJARKA-1709544000000-3_1709544000001",
+      "paidAt": "2024-03-04T10:30:00.000Z",
+      "expiredAt": "2024-03-05T10:00:00.000Z",
+      "bookingDetails": {
+        "date": "2024-03-08",
+        "time": "14:00",
+        "duration": 60,
+        "meetingType": "online",
+        "materials": [
+          "HTML",
+          "CSS",
+          "JavaScript",
+          "React"
+        ],
+        "notes": "Need help with React hooks"
+      },
+      "createdAt": "2024-03-04T10:00:00.000Z",
+      "updatedAt": "2024-03-04T10:30:00.000Z"
+    },
+    {
+      "id": "AJARKA-1756820661668-3",
+      "orderId": "AJARKA-1756820661668-3",
+      "studentId": 3,
+      "mentorId": "2",
+      "scheduleId": "1",
+      "sessionTitle": "Frontend Mentoring Session",
+      "amount": 210000,
+      "mentorFee": 147000,
+      "adminFee": 63000,
+      "status": "paid",
+      "bookingDetails": {
+        "date": "2025-10-01",
+        "time": "14:00",
+        "duration": 60,
+        "meetingType": "online",
+        "materials": [
+          "HTML",
+          "CSS",
+          "JavaScript",
+          "React"
+        ],
+        "notes": "Mau kelas ini"
+      },
+      "expiredAt": "2025-09-03T13:44:21.668Z",
+      "createdAt": "2025-09-02T13:44:21.668Z",
+      "updatedAt": "2025-09-02T13:44:27.703Z",
+      "midtransToken": "midtrans_AJARKA-1756820661668-3_1756820661693",
+      "midtransTransactionId": "MIDTRANS_1756820667703",
+      "paymentMethod": "bank_transfer",
+      "paidAt": "2025-09-02T13:44:27.703Z"
+    }
+  ],
+  "mentor_payouts": [
+    {
+      "id": "PAYOUT-2-2024-03",
+      "mentorId": 2,
+      "mentorName": "John Doe",
+      "month": "2024-03",
+      "totalSessions": 1,
+      "totalEarnings": 140000,
+      "transactions": [
+        "AJARKA-1709544000000-3"
+      ],
+      "status": "pending",
+      "createdAt": "2024-03-31T23:59:00.000Z",
+      "updatedAt": "2024-03-31T23:59:00.000Z"
+    }
+  ],
+  "bookings": [
+    {
+      "id": "1",
+      "mentorId": 2,
+      "studentId": 3,
+      "scheduleId": 1,
+      "bookingDate": "2024-01-22T09:00:00.000Z",
+      "endDate": "2024-01-22T10:00:00.000Z",
+      "duration": 60,
+      "status": "confirmed",
+      "meetingLink": "https://meet.google.com/abc-def-ghi",
+      "studentNotes": "Saya ingin belajar tentang React Hooks",
+      "mentorNotes": "Persiapkan materi React Hooks dan useEffect",
+      "price": 150000,
+      "paymentStatus": "paid",
+      "googleCalendarEventId": "sample_event_id",
+      "reminderSent": false,
+      "createdAt": "2024-01-20T10:00:00.000Z",
+      "updatedAt": "2024-01-20T10:00:00.000Z"
+    },
+    {
+      "id": "da73",
+      "mentorId": 2,
+      "studentId": 3,
+      "scheduleId": 1,
+      "bookingDate": "2024-08-26T10:00:00.000Z",
+      "endDate": "2024-08-26T11:00:00.000Z",
+      "duration": 60,
+      "status": "confirmed",
+      "meetingLink": "https://meet.google.com/test",
+      "studentNotes": "Test booking",
+      "price": 150000,
+      "paymentStatus": "paid",
+      "createdAt": "2024-08-26T10:00:00.000Z",
+      "updatedAt": "2024-08-26T10:00:00.000Z"
+    },
+    {
+      "id": "d7de",
+      "mentorId": 2,
+      "studentId": 3,
+      "scheduleId": 1,
+      "bookingDate": "2024-08-28T14:00:00.000Z",
+      "endDate": "2024-08-28T15:00:00.000Z",
+      "duration": 60,
+      "status": "confirmed",
+      "meetingLink": "https://meet.google.com/abc-def-ghi",
+      "studentNotes": "Test student booking via API",
+      "price": 150000,
+      "paymentStatus": "paid",
+      "createdAt": "2025-08-26T18:15:18+07:00",
+      "updatedAt": "2025-08-26T18:15:18+07:00"
+    },
+    {
+      "id": "19a2",
+      "mentorId": 2,
+      "studentId": 3,
+      "scheduleId": 1,
+      "bookingDate": "2025-08-27T14:00:00.000Z",
+      "endDate": "2025-08-27T15:00:00.000Z",
+      "duration": 60,
+      "status": "confirmed",
+      "meetingLink": "https://meet.google.com/abc-def-ghi",
+      "studentNotes": "Test booking for Wednesday",
+      "price": 150000,
+      "paymentStatus": "confirmed",
+      "createdAt": "2025-08-26T18:25:30+07:00",
+      "updatedAt": "2025-08-26T18:25:30+07:00"
+    },
+    {
+      "id": "c3e9",
+      "mentorId": 2,
+      "studentId": 3,
+      "scheduleId": 1,
+      "bookingDate": "2025-08-29T11:00:00.000Z",
+      "endDate": "2025-08-29T12:00:00.000Z",
+      "duration": 60,
+      "status": "confirmed",
+      "meetingLink": "https://meet.google.com/abc-def-ghi",
+      "studentNotes": "Test Friday booking via student interface",
+      "price": 150000,
+      "paymentStatus": "confirmed",
+      "createdAt": "2025-08-26T18:36:15+07:00",
+      "updatedAt": "2025-08-26T18:36:15+07:00"
+    },
+    {
+      "id": "d2c6",
+      "mentorId": "2",
+      "studentId": 3,
+      "scheduleId": "1",
+      "bookingDate": "2025-09-03T07:00:00.000Z",
+      "endDate": "2025-09-03T08:00:00.000Z",
+      "duration": 60,
+      "status": "pending",
+      "meetingLink": "https://meet.google.com/abc-def-ghi",
+      "studentNotes": "Aku bisa kalau hari ini!",
+      "price": 150000,
+      "paymentStatus": "pending",
+      "createdAt": "2025-08-27T00:27:09.516Z",
+      "updatedAt": "2025-08-27T00:27:09.516Z"
+    },
+    {
+      "id": "e5d7",
+      "mentorId": "2",
+      "studentId": 3,
+      "scheduleId": "1",
+      "bookingDate": "2025-09-17T07:00:00.000Z",
+      "endDate": "2025-09-17T08:00:00.000Z",
+      "duration": 60,
+      "status": "pending",
+      "meetingLink": "https://meet.google.com/dtn-ysgn-ayd",
+      "meetingId": "dtn-ysgn-ayd",
+      "meetingProvider": "google-meet",
+      "studentNotes": "ikutan",
+      "price": 210000,
+      "paymentStatus": "pending",
+      "createdAt": "2025-09-02T13:23:44.452Z",
+      "updatedAt": "2025-09-02T13:23:44.452Z"
+    },
+    {
+      "id": "BOOKING-AJARKA-1756820661668-3",
+      "studentId": 3,
+      "mentorId": "2",
+      "scheduleId": "1",
+      "transactionId": "AJARKA-1756820661668-3",
+      "sessionTitle": "Frontend Mentoring Session",
+      "date": "2025-10-01",
+      "time": "14:00",
+      "duration": 60,
+      "meetingType": "online",
+      "materials": [
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "React"
+      ],
+      "notes": "Mau kelas ini",
+      "status": "confirmed",
+      "meetingLink": "",
+      "createdAt": "2025-09-02T13:44:27.707Z",
+      "updatedAt": "2025-09-02T13:44:27.707Z"
+    },
+    {
+      "id": "508d",
+      "mentorId": "2",
+      "studentId": 3,
+      "scheduleId": "1",
+      "bookingDate": "2025-10-01T07:00:00.000Z",
+      "endDate": "2025-10-01T08:00:00.000Z",
+      "duration": 60,
+      "status": "confirmed",
+      "meetingLink": "https://meet.google.com/tyo-oxsu-apr",
+      "meetingId": "tyo-oxsu-apr",
+      "meetingProvider": "google-meet",
+      "studentNotes": "Mau kelas ini",
+      "price": 210000,
+      "paymentStatus": "paid",
+      "createdAt": "2025-09-02T13:44:08.334Z",
+      "updatedAt": "2025-09-02T13:44:08.334Z",
+      "transactionId": "AJARKA-1756820661668-3"
     }
   ],
   "users": [
@@ -462,7 +907,12 @@
       "description": "1-on-1 mentoring session untuk Frontend Development",
       "duration": 60,
       "maxCapacity": 5,
-      "materials": ["HTML", "CSS", "JavaScript", "React"],
+      "materials": [
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "React"
+      ],
       "meetingType": "online",
       "meetingProvider": "google-meet",
       "timezone": "Asia/Jakarta",
@@ -477,7 +927,11 @@
       "description": "Complete full-stack web development mentoring",
       "duration": 90,
       "maxCapacity": 3,
-      "materials": ["React", "Node.js", "PostgreSQL"],
+      "materials": [
+        "React",
+        "Node.js",
+        "PostgreSQL"
+      ],
       "meetingType": "online",
       "meetingProvider": "google-meet",
       "timezone": "Asia/Jakarta",
@@ -693,107 +1147,6 @@
       "updatedAt": "2025-08-28T17:17:35.643Z"
     }
   ],
-  "bookings": [
-    {
-      "id": "1",
-      "mentorId": 2,
-      "studentId": 3,
-      "scheduleId": 1,
-      "bookingDate": "2024-01-22T09:00:00.000Z",
-      "endDate": "2024-01-22T10:00:00.000Z",
-      "duration": 60,
-      "status": "confirmed",
-      "meetingLink": "https://meet.google.com/abc-def-ghi",
-      "studentNotes": "Saya ingin belajar tentang React Hooks",
-      "mentorNotes": "Persiapkan materi React Hooks dan useEffect",
-      "price": 150000,
-      "paymentStatus": "paid",
-      "googleCalendarEventId": "sample_event_id",
-      "reminderSent": false,
-      "createdAt": "2024-01-20T10:00:00.000Z",
-      "updatedAt": "2024-01-20T10:00:00.000Z"
-    },
-    {
-      "id": "da73",
-      "mentorId": 2,
-      "studentId": 3,
-      "scheduleId": 1,
-      "bookingDate": "2024-08-26T10:00:00.000Z",
-      "endDate": "2024-08-26T11:00:00.000Z",
-      "duration": 60,
-      "status": "confirmed",
-      "meetingLink": "https://meet.google.com/test",
-      "studentNotes": "Test booking",
-      "price": 150000,
-      "paymentStatus": "paid",
-      "createdAt": "2024-08-26T10:00:00.000Z",
-      "updatedAt": "2024-08-26T10:00:00.000Z"
-    },
-    {
-      "id": "d7de",
-      "mentorId": 2,
-      "studentId": 3,
-      "scheduleId": 1,
-      "bookingDate": "2024-08-28T14:00:00.000Z",
-      "endDate": "2024-08-28T15:00:00.000Z",
-      "duration": 60,
-      "status": "confirmed",
-      "meetingLink": "https://meet.google.com/abc-def-ghi",
-      "studentNotes": "Test student booking via API",
-      "price": 150000,
-      "paymentStatus": "paid",
-      "createdAt": "2025-08-26T18:15:18+07:00",
-      "updatedAt": "2025-08-26T18:15:18+07:00"
-    },
-    {
-      "id": "19a2",
-      "mentorId": 2,
-      "studentId": 3,
-      "scheduleId": 1,
-      "bookingDate": "2025-08-27T14:00:00.000Z",
-      "endDate": "2025-08-27T15:00:00.000Z",
-      "duration": 60,
-      "status": "confirmed",
-      "meetingLink": "https://meet.google.com/abc-def-ghi",
-      "studentNotes": "Test booking for Wednesday",
-      "price": 150000,
-      "paymentStatus": "confirmed",
-      "createdAt": "2025-08-26T18:25:30+07:00",
-      "updatedAt": "2025-08-26T18:25:30+07:00"
-    },
-    {
-      "id": "c3e9",
-      "mentorId": 2,
-      "studentId": 3,
-      "scheduleId": 1,
-      "bookingDate": "2025-08-29T11:00:00.000Z",
-      "endDate": "2025-08-29T12:00:00.000Z",
-      "duration": 60,
-      "status": "confirmed",
-      "meetingLink": "https://meet.google.com/abc-def-ghi",
-      "studentNotes": "Test Friday booking via student interface",
-      "price": 150000,
-      "paymentStatus": "confirmed",
-      "createdAt": "2025-08-26T18:36:15+07:00",
-      "updatedAt": "2025-08-26T18:36:15+07:00"
-    },
-    {
-      "id": "d2c6",
-      "mentorId": "2",
-      "studentId": 3,
-      "scheduleId": "1",
-      "bookingDate": "2025-09-03T07:00:00.000Z",
-      "endDate": "2025-09-03T08:00:00.000Z",
-      "duration": 60,
-      "status": "pending",
-      "meetingLink": "https://meet.google.com/abc-def-ghi",
-      "studentNotes": "Aku bisa kalau hari ini!",
-      "price": 150000,
-      "paymentStatus": "pending",
-      "createdAt": "2025-08-27T00:27:09.516Z",
-      "updatedAt": "2025-08-27T00:27:09.516Z"
-    }
-  ],
   "contact_messages": [
     {
       "id": "1",
@@ -875,6 +1228,84 @@
       },
       "read": true,
       "createdAt": "2024-01-20T08:30:00.000Z"
+    },
+    {
+      "id": "1756819425992",
+      "recipientId": "2",
+      "recipientType": "mentor",
+      "senderId": "3",
+      "senderType": "siswa",
+      "type": "booking_created",
+      "title": "New Booking Request",
+      "message": "Jane Smith has booked your session: Frontend Mentoring Session on Rabu, 17 September 2025 pukul 14.00. Meeting link (Google Meet): https://meet.google.com/dtn-ysgn-ayd",
+      "data": {
+        "bookingId": "e5d7",
+        "studentName": "Jane Smith",
+        "scheduleTitle": "Frontend Mentoring Session",
+        "bookingDate": "2025-09-17T07:00:00.000Z",
+        "meetingLink": "https://meet.google.com/dtn-ysgn-ayd",
+        "meetingProvider": "google-meet"
+      },
+      "read": false,
+      "createdAt": "2025-09-02T13:23:45.992Z"
+    },
+    {
+      "id": "1756819426009",
+      "recipientId": "2",
+      "recipientType": "mentor",
+      "senderId": "system",
+      "senderType": "admin",
+      "type": "meeting_link_generated",
+      "title": "Google Meet Link Generated",
+      "message": "Meeting link untuk session \"Frontend Mentoring Session\" pada Rabu, 17 September 2025 pukul 14.00 telah dibuat. Link: https://meet.google.com/dtn-ysgn-ayd",
+      "data": {
+        "bookingId": "e5d7",
+        "scheduleTitle": "Frontend Mentoring Session",
+        "meetingLink": "https://meet.google.com/dtn-ysgn-ayd",
+        "meetingProvider": "google-meet",
+        "bookingDate": "2025-09-17T07:00:00.000Z"
+      },
+      "read": false,
+      "createdAt": "2025-09-02T13:23:46.009Z"
+    },
+    {
+      "id": "1756819426016",
+      "recipientId": "3",
+      "recipientType": "siswa",
+      "senderId": "system",
+      "senderType": "admin",
+      "type": "meeting_link_generated",
+      "title": "Google Meet Link Ready",
+      "message": "Meeting link untuk session \"Frontend Mentoring Session\" pada Rabu, 17 September 2025 pukul 14.00 sudah siap. Link: https://meet.google.com/dtn-ysgn-ayd",
+      "data": {
+        "bookingId": "e5d7",
+        "scheduleTitle": "Frontend Mentoring Session",
+        "meetingLink": "https://meet.google.com/dtn-ysgn-ayd",
+        "meetingProvider": "google-meet",
+        "bookingDate": "2025-09-17T07:00:00.000Z"
+      },
+      "read": false,
+      "createdAt": "2025-09-02T13:23:46.016Z"
+    },
+    {
+      "id": "1756820668832",
+      "recipientId": "2",
+      "recipientType": "mentor",
+      "senderId": "3",
+      "senderType": "siswa",
+      "type": "booking_created",
+      "title": "New Booking Request",
+      "message": "Jane Smith has booked your session: Frontend Mentoring Session on Rabu, 1 Oktober 2025 pukul 14.00. Meeting link (Google Meet): https://meet.google.com/tyo-oxsu-apr",
+      "data": {
+        "bookingId": "508d",
+        "studentName": "Jane Smith",
+        "scheduleTitle": "Frontend Mentoring Session",
+        "bookingDate": "2025-10-01T07:00:00.000Z",
+        "meetingLink": "https://meet.google.com/tyo-oxsu-apr",
+        "meetingProvider": "google-meet"
+      },
+      "read": false,
+      "createdAt": "2025-09-02T13:44:28.832Z"
     }
   ]
 }
