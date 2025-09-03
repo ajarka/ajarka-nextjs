@@ -11,7 +11,9 @@
       "Bash(curl:*)",
       "Bash(npm run dev:*)",
       "Bash(npm install:*)",
-      "Read(c:\\Users\\aditi\\OneDrive\\Gambar\\Screenshot/**)"
+      "Read(c:\\Users\\aditi\\OneDrive\\Gambar\\Screenshot/**)",
+      "Read(c:\\Users\\aditi\\OneDrive\\Gambar\\Screenshot/**)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

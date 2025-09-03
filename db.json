@@ -156,17 +156,17 @@
       "discountAmount": 1200000,
       "purchaseDate": "2024-09-15T10:00:00.000Z",
       "expiryDate": "2024-12-24T10:00:00.000Z",
-      "status": "expired",
+      "status": "cancelled",
       "transactions": [
         "AJARKA-1726401600000-5"
       ],
       "createdAt": "2024-09-15T10:00:00.000Z",
-      "updatedAt": "2024-12-24T10:00:00.000Z"
+      "updatedAt": "2025-09-03T17:07:39.262Z"
     }
   ],
   "admin_pricing_rules": [
     {
-      "id": 1,
+      "id": "1",
       "name": "Frontend Development - Online",
       "materials": [
         "HTML",
@@ -186,7 +186,7 @@
       "createdAt": "2024-01-01T00:00:00.000Z"
     },
     {
-      "id": 2,
+      "id": "2",
       "name": "Frontend Development - Offline",
       "materials": [
         "HTML",
@@ -206,7 +206,7 @@
       "createdAt": "2024-01-01T00:00:00.000Z"
     },
     {
-      "id": 3,
+      "id": "3",
       "name": "Backend Development - Online",
       "materials": [
         "Node.js",
@@ -228,7 +228,7 @@
   ],
   "admin_office_locations": [
     {
-      "id": 1,
+      "id": "1",
       "name": "Ajarka Jakarta HQ",
       "address": "Jl. Sudirman No. 123, Jakarta Pusat",
       "city": "Jakarta",
@@ -246,7 +246,7 @@
       "createdAt": "2024-01-01T00:00:00.000Z"
     },
     {
-      "id": 2,
+      "id": "2",
       "name": "Ajarka Bandung",
       "address": "Jl. Braga No. 45, Bandung",
       "city": "Bandung",
@@ -265,7 +265,7 @@
   ],
   "admin_event_templates": [
     {
-      "id": 1,
+      "id": "1",
       "title": "React Workshop for Beginners",
       "description": "A comprehensive workshop covering React fundamentals",
       "category": "Frontend Development",
@@ -288,7 +288,7 @@
   ],
   "admin_settings": [
     {
-      "id": 1,
+      "id": "1",
       "mentorFeePercentage": 70,
       "adminFeePercentage": 30,
       "defaultSessionDuration": 60,
@@ -913,6 +913,15 @@
         "JavaScript",
         "React"
       ],
+      "materialIds": [
+        "MAT-FE-HTML-001",
+        "MAT-FE-CSS-001"
+      ],
+      "requiredLevel": 1,
+      "maxLevelGap": 2,
+      "verificationRequired": false,
+      "autoLevelCheck": true,
+      "allowLevelJumpers": false,
       "meetingType": "online",
       "meetingProvider": "google-meet",
       "timezone": "Asia/Jakarta",
@@ -1306,6 +1315,742 @@
       },
       "read": false,
       "createdAt": "2025-09-02T13:44:28.832Z"
+    }
+  ],
+  "learning_materials": [
+    {
+      "id": "MAT-FE-HTML-001",
+      "title": "HTML5 Semantic Elements",
+      "category": "frontend",
+      "subcategory": "fundamental",
+      "level": 1,
+      "prerequisites": [],
+      "estimatedHours": 2,
+      "meetingsRequired": 1,
+      "description": "Learn modern HTML5 semantic elements and their proper usage in web development",
+      "learningObjectives": [
+        "Understand semantic HTML structure",
+        "Use proper HTML5 elements",
+        "Create accessible web content"
+      ],
+      "resources": [
+        {
+          "type": "video",
+          "title": "HTML5 Semantic Guide",
+          "url": "https://youtube.com/html5-guide",
+          "duration": 30
+        },
+        {
+          "type": "article",
+          "title": "MDN HTML5 Elements",
+          "url": "https://developer.mozilla.org/docs/html5",
+          "duration": 15
+        }
+      ],
+      "assignments": [
+        "ASS-FE-HTML-001"
+      ],
+      "projects": [],
+      "skills": [
+        "HTML",
+        "Semantic Markup",
+        "Web Standards"
+      ],
+      "difficulty": "beginner",
+      "isActive": true,
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    },
+    {
+      "id": "MAT-FE-CSS-001",
+      "title": "CSS Fundamentals & Flexbox",
+      "category": "frontend",
+      "subcategory": "fundamental",
+      "level": 2,
+      "prerequisites": [
+        "MAT-FE-HTML-001"
+      ],
+      "estimatedHours": 3,
+      "meetingsRequired": 2,
+      "description": "Master CSS basics including selectors, properties, and modern Flexbox layout",
+      "learningObjectives": [
+        "Understand CSS selectors and specificity",
+        "Master Flexbox layout system",
+        "Create responsive designs"
+      ],
+      "resources": [
+        {
+          "type": "video",
+          "title": "CSS Flexbox Complete Guide",
+          "url": "https://youtube.com/flexbox-guide",
+          "duration": 45
+        }
+      ],
+      "assignments": [
+        "ASS-FE-CSS-001"
+      ],
+      "projects": [
+        "PROJ-FE-PORTFOLIO-001"
+      ],
+      "skills": [
+        "CSS",
+        "Flexbox",
+        "Responsive Design"
+      ],
+      "difficulty": "beginner",
+      "isActive": true,
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    },
+    {
+      "id": "MAT-FE-JS-001",
+      "title": "JavaScript ES6+ Fundamentals",
+      "category": "frontend",
+      "subcategory": "fundamental",
+      "level": 5,
+      "prerequisites": [
+        "MAT-FE-HTML-001",
+        "MAT-FE-CSS-001"
+      ],
+      "estimatedHours": 4,
+      "meetingsRequired": 3,
+      "description": "Learn modern JavaScript including ES6+ features, DOM manipulation, and async programming",
+      "learningObjectives": [
+        "Master JavaScript syntax and ES6+ features",
+        "Understand DOM manipulation",
+        "Work with async/await and Promises"
+      ],
+      "resources": [
+        {
+          "type": "video",
+          "title": "JavaScript Complete Course",
+          "url": "https://youtube.com/js-complete",
+          "duration": 120
+        }
+      ],
+      "assignments": [
+        "ASS-FE-JS-001"
+      ],
+      "projects": [
+        "PROJ-FE-INTERACTIVE-001"
+      ],
+      "skills": [
+        "JavaScript",
+        "ES6+",
+        "DOM",
+        "Async Programming"
+      ],
+      "difficulty": "beginner",
+      "isActive": true,
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    },
+    {
+      "id": "MAT-FE-REACT-001",
+      "title": "React Components & Hooks",
+      "category": "frontend",
+      "subcategory": "framework",
+      "level": 10,
+      "prerequisites": [
+        "MAT-FE-JS-001"
+      ],
+      "estimatedHours": 6,
+      "meetingsRequired": 4,
+      "description": "Build dynamic user interfaces with React components, hooks, and state management",
+      "learningObjectives": [
+        "Create functional React components",
+        "Master React hooks (useState, useEffect)",
+        "Manage component state and props"
+      ],
+      "resources": [
+        {
+          "type": "documentation",
+          "title": "Official React Docs",
+          "url": "https://react.dev",
+          "duration": 60
+        }
+      ],
+      "assignments": [
+        "ASS-FE-REACT-001"
+      ],
+      "projects": [
+        "PROJ-FE-REACT-APP-001"
+      ],
+      "skills": [
+        "React",
+        "JSX",
+        "Hooks",
+        "State Management"
+      ],
+      "difficulty": "intermediate",
+      "isActive": true,
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    }
+  ],
+  "learning_journeys": [
+    {
+      "id": "JOURNEY-FRONTEND-001",
+      "title": "Frontend Developer Journey",
+      "description": "Complete path to becoming a Frontend Developer with modern technologies",
+      "category": "frontend",
+      "totalLevels": 50,
+      "estimatedDuration": "4-6 months",
+      "phases": [
+        {
+          "id": "PHASE-1",
+          "title": "HTML & CSS Fundamentals",
+          "description": "Master the basics of web markup and styling",
+          "levels": [
+            1,
+            5
+          ],
+          "materials": [
+            "MAT-FE-HTML-001",
+            "MAT-FE-CSS-001"
+          ],
+          "assignments": [
+            "ASS-FE-HTML-001",
+            "ASS-FE-CSS-001"
+          ],
+          "projects": [
+            "PROJ-FE-PORTFOLIO-001"
+          ],
+          "estimatedDuration": "3-4 weeks"
+        },
+        {
+          "id": "PHASE-2",
+          "title": "JavaScript & Interactivity",
+          "description": "Learn JavaScript programming and DOM manipulation",
+          "levels": [
+            5,
+            10
+          ],
+          "materials": [
+            "MAT-FE-JS-001"
+          ],
+          "assignments": [
+            "ASS-FE-JS-001"
+          ],
+          "projects": [
+            "PROJ-FE-INTERACTIVE-001"
+          ],
+          "estimatedDuration": "4-5 weeks"
+        },
+        {
+          "id": "PHASE-3",
+          "title": "React Framework",
+          "description": "Build modern web applications with React",
+          "levels": [
+            10,
+            20
+          ],
+          "materials": [
+            "MAT-FE-REACT-001"
+          ],
+          "assignments": [
+            "ASS-FE-REACT-001"
+          ],
+          "projects": [
+            "PROJ-FE-REACT-APP-001"
+          ],
+          "estimatedDuration": "6-8 weeks"
+        }
+      ],
+      "prerequisites": [],
+      "skills": [
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "React"
+      ],
+      "certificationProject": "PROJ-FE-CAPSTONE-001",
+      "isActive": true,
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    }
+  ],
+  "assignments": [
+    {
+      "id": "ASS-FE-HTML-001",
+      "title": "Create Semantic HTML Page",
+      "description": "Build a complete webpage using semantic HTML5 elements",
+      "materialId": "MAT-FE-HTML-001",
+      "journeyId": "JOURNEY-FRONTEND-001",
+      "level": 1,
+      "type": "coding",
+      "instructions": "Create a blog post layout using semantic HTML5 elements. Include header, nav, main, article, aside, and footer sections.",
+      "requirements": [
+        "Use at least 5 different semantic elements",
+        "Include proper meta tags and document structure",
+        "Validate HTML using W3C validator",
+        "Add meaningful content to each section"
+      ],
+      "submissionFormat": "github_repo",
+      "maxAttempts": 3,
+      "passingScore": 80,
+      "timeLimit": 7200,
+      "resources": [
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element",
+        "https://validator.w3.org/"
+      ],
+      "rubric": [
+        {
+          "criteria": "Semantic HTML Usage",
+          "points": 40,
+          "description": "Proper use of semantic elements (header, nav, main, etc.)"
+        },
+        {
+          "criteria": "Document Structure",
+          "points": 30,
+          "description": "Clean, logical document structure with proper nesting"
+        },
+        {
+          "criteria": "Content Quality",
+          "points": 30,
+          "description": "Meaningful content and proper meta information"
+        }
+      ],
+      "isActive": true,
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    },
+    {
+      "id": "ASS-FE-CSS-001",
+      "title": "Responsive Layout with Flexbox",
+      "description": "Create a responsive website layout using CSS Flexbox",
+      "materialId": "MAT-FE-CSS-001",
+      "journeyId": "JOURNEY-FRONTEND-001",
+      "level": 2,
+      "type": "coding",
+      "instructions": "Build a responsive navigation bar and card layout using Flexbox. The layout should adapt to different screen sizes.",
+      "requirements": [
+        "Use Flexbox for main layout structure",
+        "Implement responsive design (mobile-first approach)",
+        "Include at least 3 breakpoints",
+        "Create a navigation bar and card grid"
+      ],
+      "submissionFormat": "github_repo",
+      "maxAttempts": 3,
+      "passingScore": 80,
+      "timeLimit": 10800,
+      "resources": [
+        "https://css-tricks.com/snippets/css/a-guide-to-flexbox/",
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Flexible_Box_Layout"
+      ],
+      "rubric": [
+        {
+          "criteria": "Flexbox Implementation",
+          "points": 40,
+          "description": "Proper use of Flexbox properties and layout"
+        },
+        {
+          "criteria": "Responsive Design",
+          "points": 35,
+          "description": "Layout adapts well to different screen sizes"
+        },
+        {
+          "criteria": "Code Quality",
+          "points": 25,
+          "description": "Clean, organized CSS with good naming conventions"
+        }
+      ],
+      "isActive": true,
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    },
+    {
+      "id": "ASS-FE-JS-001",
+      "title": "Interactive To-Do List",
+      "description": "Build a functional to-do list application with JavaScript",
+      "materialId": "MAT-FE-JS-001",
+      "journeyId": "JOURNEY-FRONTEND-001",
+      "level": 5,
+      "type": "coding",
+      "instructions": "Create an interactive to-do list with add, delete, and mark complete functionality using vanilla JavaScript.",
+      "requirements": [
+        "Add new tasks functionality",
+        "Delete tasks with confirmation",
+        "Mark tasks as completed/uncompleted",
+        "Store data in localStorage",
+        "Use ES6+ features (arrow functions, destructuring, etc.)"
+      ],
+      "submissionFormat": "github_repo",
+      "maxAttempts": 3,
+      "passingScore": 80,
+      "timeLimit": 14400,
+      "resources": [
+        "https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model",
+        "https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage"
+      ],
+      "rubric": [
+        {
+          "criteria": "JavaScript Functionality",
+          "points": 45,
+          "description": "All required features work correctly"
+        },
+        {
+          "criteria": "ES6+ Usage",
+          "points": 25,
+          "description": "Proper use of modern JavaScript features"
+        },
+        {
+          "criteria": "Code Structure",
+          "points": 30,
+          "description": "Clean, readable code with good organization"
+        }
+      ],
+      "isActive": true,
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    },
+    {
+      "id": "ASS-FE-REACT-001",
+      "title": "React Counter App with Hooks",
+      "description": "Build a counter application demonstrating React hooks and state management",
+      "materialId": "MAT-FE-REACT-001",
+      "journeyId": "JOURNEY-FRONTEND-001",
+      "level": 10,
+      "type": "coding",
+      "instructions": "Create a React application with multiple counters, using useState and useEffect hooks.",
+      "requirements": [
+        "Use functional components with hooks",
+        "Implement useState for state management",
+        "Use useEffect for side effects",
+        "Add increment, decrement, and reset functionality",
+        "Include multiple counter instances"
+      ],
+      "submissionFormat": "github_repo",
+      "maxAttempts": 3,
+      "passingScore": 80,
+      "timeLimit": 18000,
+      "resources": [
+        "https://react.dev/learn/state-a-components-memory",
+        "https://react.dev/learn/synchronizing-with-effects"
+      ],
+      "rubric": [
+        {
+          "criteria": "React Hooks Usage",
+          "points": 40,
+          "description": "Proper implementation of useState and useEffect"
+        },
+        {
+          "criteria": "Component Structure",
+          "points": 30,
+          "description": "Well-organized functional components"
+        },
+        {
+          "criteria": "Functionality",
+          "points": 30,
+          "description": "All counter features work as expected"
+        }
+      ],
+      "isActive": true,
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    }
+  ],
+  "projects": [
+    {
+      "id": "PROJ-FE-PORTFOLIO-001",
+      "title": "Personal Portfolio Website",
+      "description": "Build a complete responsive portfolio website showcasing your skills",
+      "type": "individual",
+      "level": 3,
+      "journeyId": "JOURNEY-FRONTEND-001",
+      "prerequisites": [
+        "MAT-FE-HTML-001",
+        "MAT-FE-CSS-001"
+      ],
+      "estimatedHours": 20,
+      "requirements": [
+        "Responsive design that works on mobile, tablet, and desktop",
+        "Modern CSS techniques (Flexbox/Grid)",
+        "GitHub Pages deployment",
+        "5-minute video explanation of design decisions",
+        "At least 4 sections: About, Skills, Projects, Contact"
+      ],
+      "submissionRequirements": {
+        "githubRepo": true,
+        "liveDemo": true,
+        "videoExplanation": {
+          "required": true,
+          "maxDuration": 300,
+          "topics": [
+            "Design decisions and color scheme",
+            "Technical challenges faced",
+            "Responsive design approach",
+            "Learning outcomes and next steps"
+          ]
+        },
+        "documentation": true
+      },
+      "evaluationCriteria": [
+        {
+          "name": "Code Quality",
+          "weight": 30,
+          "description": "Clean, readable, maintainable HTML and CSS code"
+        },
+        {
+          "name": "Design & UX",
+          "weight": 25,
+          "description": "User experience, visual design, and accessibility"
+        },
+        {
+          "name": "Responsive Implementation",
+          "weight": 25,
+          "description": "Proper responsive design across all devices"
+        },
+        {
+          "name": "Video Explanation",
+          "weight": 20,
+          "description": "Clear explanation of project and learning process"
+        }
+      ],
+      "isActive": true,
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    },
+    {
+      "id": "PROJ-FE-INTERACTIVE-001",
+      "title": "Interactive Weather App",
+      "description": "Create a weather application using JavaScript and external APIs",
+      "type": "individual",
+      "level": 7,
+      "journeyId": "JOURNEY-FRONTEND-001",
+      "prerequisites": [
+        "MAT-FE-JS-001"
+      ],
+      "estimatedHours": 25,
+      "requirements": [
+        "Fetch weather data from external API",
+        "Search functionality for different cities",
+        "Display current weather and 5-day forecast",
+        "Error handling for failed API requests",
+        "Local storage for favorite cities",
+        "5-minute video explaining API integration"
+      ],
+      "submissionRequirements": {
+        "githubRepo": true,
+        "liveDemo": true,
+        "videoExplanation": {
+          "required": true,
+          "maxDuration": 300,
+          "topics": [
+            "API integration approach",
+            "Error handling strategies",
+            "JavaScript patterns used",
+            "Challenges with async programming"
+          ]
+        },
+        "documentation": true
+      },
+      "evaluationCriteria": [
+        {
+          "name": "JavaScript Implementation",
+          "weight": 35,
+          "description": "Quality of JavaScript code and async handling"
+        },
+        {
+          "name": "API Integration",
+          "weight": 25,
+          "description": "Proper API usage and error handling"
+        },
+        {
+          "name": "User Interface",
+          "weight": 20,
+          "description": "User-friendly interface and responsive design"
+        },
+        {
+          "name": "Video Explanation",
+          "weight": 20,
+          "description": "Clear technical explanation of implementation"
+        }
+      ],
+      "isActive": true,
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    },
+    {
+      "id": "PROJ-FE-REACT-APP-001",
+      "title": "React Task Management App",
+      "description": "Build a full-featured task management application with React",
+      "type": "individual",
+      "level": 15,
+      "journeyId": "JOURNEY-FRONTEND-001",
+      "prerequisites": [
+        "MAT-FE-REACT-001"
+      ],
+      "estimatedHours": 35,
+      "requirements": [
+        "Create, read, update, delete tasks (CRUD operations)",
+        "Task categories and priority levels",
+        "Filter and sort functionality",
+        "React hooks for state management",
+        "Component-based architecture",
+        "Local storage persistence",
+        "5-minute video explaining React concepts used"
+      ],
+      "submissionRequirements": {
+        "githubRepo": true,
+        "liveDemo": true,
+        "videoExplanation": {
+          "required": true,
+          "maxDuration": 300,
+          "topics": [
+            "React component architecture",
+            "State management approach",
+            "Hook usage and patterns",
+            "Challenges and solutions"
+          ]
+        },
+        "documentation": true
+      },
+      "evaluationCriteria": [
+        {
+          "name": "React Implementation",
+          "weight": 40,
+          "description": "Proper use of React components, hooks, and patterns"
+        },
+        {
+          "name": "Functionality",
+          "weight": 25,
+          "description": "All required features work correctly"
+        },
+        {
+          "name": "Code Architecture",
+          "weight": 15,
+          "description": "Well-organized component structure and code quality"
+        },
+        {
+          "name": "Video Explanation",
+          "weight": 20,
+          "description": "Clear explanation of React concepts and implementation"
+        }
+      ],
+      "isActive": true,
+      "createdAt": "2024-12-23T00:00:00.000Z",
+      "updatedAt": "2024-12-23T00:00:00.000Z"
+    }
+  ],
+  "student_progress": [
+    {
+      "id": "PROGRESS-STUDENT-3",
+      "studentId": 3,
+      "journeyId": "JOURNEY-FRONTEND-001",
+      "currentLevel": 5,
+      "currentPhase": "PHASE-2",
+      "status": "active",
+      "startedAt": "2024-12-01T00:00:00.000Z",
+      "completedMaterials": [
+        "MAT-FE-HTML-001",
+        "MAT-FE-CSS-001"
+      ],
+      "completedAssignments": [
+        {
+          "assignmentId": "ASS-FE-HTML-001",
+          "score": 85,
+          "attempts": 1,
+          "completedAt": "2024-12-05T10:00:00.000Z",
+          "feedback": "Great use of semantic elements! Clean code structure.",
+          "submissionUrl": "https://github.com/student/html-assignment"
+        },
+        {
+          "assignmentId": "ASS-FE-CSS-001",
+          "score": 88,
+          "attempts": 2,
+          "completedAt": "2024-12-10T15:30:00.000Z",
+          "feedback": "Excellent responsive design implementation!",
+          "submissionUrl": "https://github.com/student/css-assignment"
+        }
+      ],
+      "completedProjects": [
+        {
+          "projectId": "PROJ-FE-PORTFOLIO-001",
+          "score": 88,
+          "submissionUrl": "https://github.com/student/portfolio",
+          "liveUrl": "https://student.github.io/portfolio",
+          "videoUrl": "https://youtube.com/watch?v=portfolio-demo",
+          "completedAt": "2024-12-15T15:30:00.000Z",
+          "feedback": "Excellent project implementation! Great attention to responsive design."
+        }
+      ],
+      "skillsAcquired": [
+        "HTML",
+        "CSS",
+        "Flexbox",
+        "Responsive Design"
+      ],
+      "certificates": [],
+      "nextMaterial": "MAT-FE-JS-001",
+      "estimatedCompletion": "2025-04-01T00:00:00.000Z",
+      "updatedAt": "2024-12-20T00:00:00.000Z"
+    },
+    {
+      "id": "PROGRESS-STUDENT-2",
+      "studentId": 2,
+      "journeyId": "JOURNEY-FRONTEND-001",
+      "currentLevel": 1,
+      "currentPhase": "PHASE-1",
+      "status": "active",
+      "startedAt": "2025-09-03T00:02:34.453Z",
+      "completedMaterials": [],
+      "completedAssignments": [],
+      "completedProjects": [],
+      "skillsAcquired": [],
+      "certificates": [],
+      "nextMaterial": "",
+      "estimatedCompletion": "2026-01-01T00:02:34.453Z",
+      "updatedAt": "2025-09-03T00:02:34.453Z"
+    },
+    {
+      "id": "PROGRESS-STUDENT-1",
+      "studentId": 1,
+      "journeyId": "JOURNEY-FRONTEND-001",
+      "currentLevel": 1,
+      "currentPhase": "PHASE-1",
+      "status": "active",
+      "startedAt": "2025-09-03T00:28:03.309Z",
+      "completedMaterials": [],
+      "completedAssignments": [],
+      "completedProjects": [],
+      "skillsAcquired": [],
+      "certificates": [],
+      "nextMaterial": "",
+      "estimatedCompletion": "2026-01-01T00:28:03.309Z",
+      "updatedAt": "2025-09-03T00:28:03.309Z"
+    }
+  ],
+  "level_verifications": [
+    {
+      "id": "VERIFICATION-3-FRONTEND-10",
+      "studentId": 3,
+      "journeyId": "JOURNEY-FRONTEND-001",
+      "currentLevel": 5,
+      "targetLevel": 10,
+      "type": "level_jump",
+      "status": "pending",
+      "requirements": [
+        {
+          "type": "assignment",
+          "assignmentId": "ASS-FE-VERIFICATION-001",
+          "status": "pending",
+          "score": null
+        },
+        {
+          "type": "project",
+          "projectId": "PROJ-FE-VERIFICATION-001",
+          "status": "pending",
+          "score": null
+        }
+      ],
+      "submissions": [],
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "feedback": null,
+      "approvedLevel": null,
+      "createdAt": "2024-12-20T09:00:00.000Z",
+      "updatedAt": "2024-12-20T09:00:00.000Z"
     }
   ]
 }

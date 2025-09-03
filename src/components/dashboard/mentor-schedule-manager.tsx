@@ -23,7 +23,8 @@ import {
   Video,
   Globe,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  BookOpen
 } from "lucide-react"
 import { motion } from "framer-motion"
 import { format, addDays, startOfWeek } from 'date-fns'
@@ -34,6 +35,8 @@ import { NotificationService } from '@/lib/notification-service'
 import { useSession } from 'next-auth/react'
 import { useMeetingGeneration } from '@/hooks/useMeetingGeneration'
 import { AdminService, AdminPricingRule, AdminOfficeLocation } from '@/lib/admin-service'
+import { learningService, type LearningMaterial } from '@/lib/learning-service'
+import MentorScheduleDialog from './mentor-schedule-manager-dialog'
 
 interface MentorSchedule {
   id?: number
@@ -42,6 +45,12 @@ interface MentorSchedule {
   duration: number
   maxCapacity: number
   materials: string[]
+  materialIds?: string[] // Learning material IDs
+  requiredLevel?: number // Minimum level required
+  maxLevelGap?: number // Max level difference allowed between students
+  verificationRequired?: boolean // Require level verification
+  autoLevelCheck?: boolean // Automatically check student levels
+  allowLevelJumpers?: boolean // Allow students who got level verification
   meetingType: 'online' | 'offline'
   meetingProvider: 'zoom' | 'google-meet'
   locationId?: number
@@ -92,12 +101,22 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
   const [calculatedPrice, setCalculatedPrice] = useState<number>(0)
   const [mentorFee, setMentorFee] = useState<number>(0)
   
+  // Learning materials data
+  const [availableMaterials, setAvailableMaterials] = useState<LearningMaterial[]>([])
+  const [selectedMaterialIds, setSelectedMaterialIds] = useState<string[]>([])
+  
   const [newSchedule, setNewSchedule] = useState<MentorSchedule>({
     title: '',
     description: '',
     duration: 60,
     maxCapacity: 1,
     materials: [],
+    materialIds: [],
+    requiredLevel: 1,
+    maxLevelGap: 2,
+    verificationRequired: false,
+    autoLevelCheck: true,
+    allowLevelJumpers: false,
     meetingType: 'online',
     meetingProvider: 'google-meet',
     timezone: 'Asia/Jakarta',
@@ -115,14 +134,16 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
   useEffect(() => {
     fetchSchedules()
     fetchAdminSettings()
+    fetchLearningMaterials()
   }, [mentorId])
 
   useEffect(() => {
     // Recalculate pricing when schedule data changes
-    if (newSchedule.materials.length > 0 && newSchedule.duration > 0) {
+    const hasMaterials = (newSchedule.materialIds && newSchedule.materialIds.length > 0) || newSchedule.materials.length > 0
+    if (hasMaterials && newSchedule.duration > 0) {
       calculatePricing()
     }
-  }, [newSchedule.materials, newSchedule.duration, newSchedule.meetingType, adminPricingRules])
+  }, [newSchedule.materials, newSchedule.materialIds, newSchedule.duration, newSchedule.meetingType, adminPricingRules, availableMaterials])
 
   const fetchAdminSettings = async () => {
     try {
@@ -137,11 +158,27 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
     }
   }
 
+  const fetchLearningMaterials = async () => {
+    try {
+      const materials = await learningService.getLearningMaterials()
+      setAvailableMaterials(materials.filter(m => m.isActive))
+    } catch (error) {
+      console.error('Error fetching learning materials:', error)
+    }
+  }
+
   const calculatePricing = () => {
-    if (adminPricingRules.length === 0 || newSchedule.materials.length === 0) return
+    const materialsToUse = newSchedule.materialIds && newSchedule.materialIds.length > 0 
+      ? newSchedule.materialIds.map(id => {
+          const material = availableMaterials.find(m => m.id === id)
+          return material?.title || id
+        })
+      : newSchedule.materials
+    
+    if (adminPricingRules.length === 0 || materialsToUse.length === 0) return
 
     const price = AdminService.calculateSessionPrice(adminPricingRules, {
-      materials: newSchedule.materials,
+      materials: materialsToUse,
       duration: newSchedule.duration,
       isOnline: newSchedule.meetingType === 'online',
       sessionType: 'mentoring'
@@ -410,221 +447,24 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
           </p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Buat Jadwal Baru
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Buat Jadwal Mentoring Baru</DialogTitle>
-              <DialogDescription>
-                Atur detail jadwal mentoring yang akan tersedia untuk booking siswa
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Judul Session</Label>
-                  <Input
-                    id="title"
-                    value={newSchedule.title}
-                    onChange={(e) => setNewSchedule({ ...newSchedule, title: e.target.value })}
-                    placeholder="Frontend Mentoring"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="duration">Durasi (menit)</Label>
-                  <Select value={newSchedule.duration.toString()} onValueChange={(value) => setNewSchedule({ ...newSchedule, duration: parseInt(value) })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="30">30 menit</SelectItem>
-                      <SelectItem value="60">60 menit</SelectItem>
-                      <SelectItem value="90">90 menit</SelectItem>
-                      <SelectItem value="120">120 menit</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Deskripsi</Label>
-                <Textarea
-                  id="description"
-                  value={newSchedule.description}
-                  onChange={(e) => setNewSchedule({ ...newSchedule, description: e.target.value })}
-                  placeholder="Deskripsi session mentoring..."
-                  rows={3}
-                />
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Materials to Cover</Label>
-                  <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-md min-h-[100px]">
-                    {adminPricingRules.map((rule) => 
-                      rule.materials.map((material) => (
-                        <button
-                          key={material}
-                          type="button"
-                          onClick={() => {
-                            const isSelected = newSchedule.materials.includes(material)
-                            if (isSelected) {
-                              setNewSchedule({
-                                ...newSchedule,
-                                materials: newSchedule.materials.filter(m => m !== material)
-                              })
-                            } else {
-                              setNewSchedule({
-                                ...newSchedule,
-                                materials: [...newSchedule.materials, material]
-                              })
-                            }
-                          }}
-                          className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                            newSchedule.materials.includes(material)
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
-                        >
-                          {material}
-                        </button>
-                      ))
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500">Select materials that will be covered in this session. Pricing is automatically calculated based on admin settings.</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="capacity">Maksimal Peserta</Label>
-                    <Input
-                      id="capacity"
-                      type="number"
-                      min="1"
-                      max="20"
-                      value={newSchedule.maxCapacity}
-                      onChange={(e) => setNewSchedule({ ...newSchedule, maxCapacity: parseInt(e.target.value) })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="meetingType">Tipe Meeting</Label>
-                    <Select value={newSchedule.meetingType} onValueChange={(value: 'online' | 'offline') => setNewSchedule({ ...newSchedule, meetingType: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="online">Online</SelectItem>
-                        <SelectItem value="offline">Tatap Muka</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Admin-Calculated Pricing Display */}
-                {calculatedPrice > 0 && (
-                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                      <div className="w-full">
-                        <h4 className="font-medium text-green-800">Your Earnings per Session</h4>
-                        <div className="mt-2 text-center">
-                          <span className="text-2xl font-bold text-green-600">Rp {mentorFee.toLocaleString('id-ID')}</span>
-                          <p className="text-xs text-green-700 mt-1">
-                            Dihitung otomatis oleh admin (70% dari harga siswa)
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {newSchedule.meetingType === 'online' && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="meetingProvider">Platform Meeting</Label>
-                    <Select value={newSchedule.meetingProvider} onValueChange={(value: 'zoom' | 'google-meet') => setNewSchedule({ ...newSchedule, meetingProvider: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="google-meet">
-                          <div className="flex items-center gap-2">
-                            <Video className="h-4 w-4" />
-                            Google Meet
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="zoom">
-                          <div className="flex items-center gap-2">
-                            <Video className="h-4 w-4" />
-                            Zoom
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <div className="text-sm text-blue-800">
-                        <p className="font-medium">Link meeting otomatis akan dibuat!</p>
-                        <p className="mt-1">Sistem akan secara otomatis generate link {newSchedule.meetingProvider === 'zoom' ? 'Zoom' : 'Google Meet'} ketika ada booking baru. Link akan dikirim ke mentor dan student melalui notifikasi.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {newSchedule.meetingType === 'offline' && (
-                <div className="space-y-2">
-                  <Label htmlFor="location">Office Location</Label>
-                  <Select 
-                    value={newSchedule.locationId?.toString() || ''} 
-                    onValueChange={(value) => setNewSchedule({ ...newSchedule, locationId: parseInt(value) })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select an office location" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {adminLocations.map((location) => (
-                        <SelectItem key={location.id} value={location.id.toString()}>
-                          <div>
-                            <div className="font-medium">{location.name}</div>
-                            <div className="text-sm text-gray-500">{location.address}</div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500">Select from admin-managed office locations for offline sessions.</p>
-                </div>
-              )}
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Batal
-              </Button>
-              <Button onClick={createSchedule} disabled={saving}>
-                {saving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Menyimpan...
-                  </>
-                ) : (
-                  'Simpan Jadwal'
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
+          <Plus className="h-4 w-4" />
+          Buat Jadwal Baru
+        </Button>
+        
+        <MentorScheduleDialog
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          newSchedule={newSchedule}
+          setNewSchedule={setNewSchedule}
+          availableMaterials={availableMaterials}
+          adminPricingRules={adminPricingRules}
+          adminLocations={adminLocations}
+          calculatedPrice={calculatedPrice}
+          mentorFee={mentorFee}
+          saving={saving}
+          onSubmit={createSchedule}
+        />
       </div>
 
       {schedules.length === 0 ? (

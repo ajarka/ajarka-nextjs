@@ -18,7 +18,12 @@ import {
   Star,
   Search,
   CalendarDays,
-  CheckCircle2
+  CheckCircle2,
+  Shield,
+  AlertTriangle,
+  TrendingUp,
+  Award,
+  Lock
 } from "lucide-react"
 import { motion } from "framer-motion"
 import { format, addDays, startOfDay, isToday, isTomorrow, addMinutes, setHours, setMinutes } from 'date-fns'
@@ -43,6 +48,7 @@ import { AdminService, AdminPricingRule } from '@/lib/admin-service'
 import { PaymentService, PaymentRequest } from '@/lib/payment-service'
 import { BundleService, BundlePackage, StudentSubscription } from '@/lib/bundle-service'
 import PaymentButton from '@/components/payment/payment-button'
+import { StudentLevelService, MentorScheduleWithLevels, LevelCheckResult, StudentProgress } from '@/lib/student-level-service'
 
 interface Mentor {
   id: number
@@ -54,20 +60,9 @@ interface Mentor {
   totalStudents: number
 }
 
-interface MentorSchedule {
-  id: number
-  mentorId: number
-  title: string
-  description: string
-  duration: number
-  maxCapacity: number
-  materials: string[]
-  meetingType: 'online' | 'offline'
-  meetingProvider: 'zoom' | 'google-meet'
+interface MentorSchedule extends MentorScheduleWithLevels {
   meetingLink: string
   locationId?: number
-  timezone: string
-  isActive: boolean
 }
 
 interface AvailabilitySlot {
@@ -122,6 +117,13 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
   const [availableDates, setAvailableDates] = useState<Date[]>([])
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([])
   
+  // Level-based filtering state
+  const [studentProgress, setStudentProgress] = useState<StudentProgress | null>(null)
+  const [scheduleCompatibility, setScheduleCompatibility] = useState<Map<number, LevelCheckResult>>(new Map())
+  const [showLevelVerificationDialog, setShowLevelVerificationDialog] = useState(false)
+  const [recommendedSchedules, setRecommendedSchedules] = useState<MentorSchedule[]>([])
+  const [showAllSchedules, setShowAllSchedules] = useState(false)
+  
   // Admin pricing rules
   const [adminPricingRules, setAdminPricingRules] = useState<AdminPricingRule[]>([])
   
@@ -145,7 +147,15 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
     fetchData()
     fetchAdminPricingRules()
     fetchBundleData()
+    fetchStudentProgress()
   }, [])
+
+  useEffect(() => {
+    if (schedules.length > 0 && studentProgress) {
+      checkScheduleCompatibility()
+      getRecommendedSchedules()
+    }
+  }, [schedules, studentProgress])
 
   const fetchAdminPricingRules = async () => {
     try {
@@ -167,6 +177,53 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
       setActiveSubscription(subscription)
     } catch (error) {
       console.error('Error fetching bundle data:', error)
+    }
+  }
+
+  const fetchStudentProgress = async () => {
+    try {
+      const progress = await StudentLevelService.getStudentProgress(studentId)
+      setStudentProgress(progress)
+    } catch (error) {
+      console.error('Error fetching student progress:', error)
+    }
+  }
+
+  const checkScheduleCompatibility = async () => {
+    try {
+      const compatibilityMap = new Map<number, LevelCheckResult>()
+      
+      for (const schedule of schedules) {
+        const levelCheck = await StudentLevelService.checkLevelRequirement(studentId, schedule)
+        compatibilityMap.set(schedule.id, levelCheck)
+      }
+      
+      setScheduleCompatibility(compatibilityMap)
+    } catch (error) {
+      console.error('Error checking schedule compatibility:', error)
+    }
+  }
+
+  const getRecommendedSchedules = async () => {
+    try {
+      const recommended = await StudentLevelService.getRecommendedSchedules(studentId, schedules)
+      setRecommendedSchedules(recommended)
+    } catch (error) {
+      console.error('Error getting recommended schedules:', error)
+    }
+  }
+
+  const handleLevelVerificationRequest = async (targetLevel: number) => {
+    try {
+      await StudentLevelService.requestLevelVerification(studentId, targetLevel)
+      setShowLevelVerificationDialog(false)
+      alert('Level verification request submitted! We will review your request and notify you.')
+      
+      // Refresh compatibility checks
+      await checkScheduleCompatibility()
+    } catch (error) {
+      console.error('Error requesting level verification:', error)
+      alert('Failed to submit level verification request. Please try again.')
     }
   }
 
@@ -386,7 +443,24 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
     setAvailableTimeSlots(timeSlots.sort())
   }
 
-  const openBookingDialog = (mentor: Mentor, schedule: MentorSchedule) => {
+  const openBookingDialog = async (mentor: Mentor, schedule: MentorSchedule) => {
+    // Check level requirements before opening booking dialog
+    const levelCheck = scheduleCompatibility.get(schedule.id)
+    if (levelCheck && !levelCheck.canBook) {
+      alert(`Unable to book: ${levelCheck.reason}\n\nSuggested action: ${levelCheck.suggestedAction}`)
+      
+      // If level verification is allowed, offer the option
+      if (schedule.allowLevelJumpers && levelCheck.reason?.includes('level')) {
+        const shouldRequestVerification = window.confirm(
+          'Would you like to request level verification to access this session?'
+        )
+        if (shouldRequestVerification) {
+          await handleLevelVerificationRequest(levelCheck.requiredLevel)
+        }
+      }
+      return
+    }
+
     setSelectedMentor(mentor)
     setSelectedSchedule(schedule)
     setBookingForm({
@@ -739,6 +813,22 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
     mentor.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()))
   )
 
+  const getScheduleDisplayData = (schedule: MentorSchedule) => {
+    const levelCheck = scheduleCompatibility.get(schedule.id)
+    const isRecommended = recommendedSchedules.some(rec => rec.id === schedule.id)
+    
+    return {
+      levelCheck,
+      isRecommended,
+      canBook: levelCheck?.canBook ?? true,
+      levelStatus: levelCheck ? {
+        requiredLevel: levelCheck.requiredLevel,
+        studentLevel: levelCheck.studentLevel,
+        hasVerification: levelCheck.hasVerification
+      } : null
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -755,9 +845,34 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
         <p className="text-muted-foreground">
           Find and book sessions with our expert mentors
         </p>
+        
+        {/* Student Level Display */}
+        {studentProgress && (
+          <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-blue-600" />
+                <span className="font-medium text-blue-900">Your Level: {studentProgress.currentLevel}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Award className="h-4 w-4 text-purple-600" />
+                <span className="text-sm text-purple-700">
+                  Skills: {studentProgress.skillsAcquired.slice(0, 3).join(', ')}
+                  {studentProgress.skillsAcquired.length > 3 && ` +${studentProgress.skillsAcquired.length - 3} more`}
+                </span>
+              </div>
+              {studentProgress.averageScore > 0 && (
+                <div className="flex items-center gap-2">
+                  <Star className="h-4 w-4 text-orange-500" />
+                  <span className="text-sm text-orange-700">Average Score: {studentProgress.averageScore}%</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Search */}
+      {/* Search and Filters */}
       <div className="flex items-center gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -768,6 +883,29 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
             className="pl-10"
           />
         </div>
+        
+        {/* Smart Filtering Toggle */}
+        {recommendedSchedules.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant={!showAllSchedules ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowAllSchedules(false)}
+              className="gap-2"
+            >
+              <Shield className="h-4 w-4" />
+              Recommended ({recommendedSchedules.length})
+            </Button>
+            <Button
+              variant={showAllSchedules ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowAllSchedules(true)}
+              className="gap-2"
+            >
+              All Sessions ({schedules.length})
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Mentors Grid */}
@@ -828,53 +966,109 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
                       {mentorSchedules.length === 0 ? (
                         <p className="text-sm text-muted-foreground">No sessions available</p>
                       ) : (
-                        mentorSchedules.slice(0, 2).map((schedule) => (
-                          <div
-                            key={schedule.id}
-                            className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                          >
-                            <div className="flex-1">
-                              <p className="font-medium text-sm">{schedule.title}</p>
-                              
-                              {/* Materials Display */}
-                              {schedule.materials && schedule.materials.length > 0 && (
-                                <div className="mb-1">
-                                  <div className="flex flex-wrap gap-1">
-                                    {schedule.materials.slice(0, 3).map((material, index) => (
-                                      <span key={index} className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded text-xs">
-                                        {material}
-                                      </span>
-                                    ))}
-                                    {schedule.materials.length > 3 && (
-                                      <span className="text-xs text-muted-foreground">+{schedule.materials.length - 3}</span>
+                        mentorSchedules
+                          .filter(schedule => showAllSchedules || recommendedSchedules.some(rec => rec.id === schedule.id))
+                          .slice(0, showAllSchedules ? 3 : 2)
+                          .map((schedule) => {
+                            const displayData = getScheduleDisplayData(schedule)
+                            const levelCheck = displayData.levelCheck
+                            
+                            return (
+                              <div
+                                key={schedule.id}
+                                className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${
+                                  displayData.canBook 
+                                    ? 'hover:bg-muted/50 border-gray-200' 
+                                    : 'border-red-200 bg-red-50 opacity-75'
+                                } ${
+                                  displayData.isRecommended ? 'ring-2 ring-blue-200 bg-blue-50' : ''
+                                }`}
+                              >
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <p className="font-medium text-sm">{schedule.title}</p>
+                                    {displayData.isRecommended && (
+                                      <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+                                        <Shield className="h-3 w-3 mr-1" />
+                                        Recommended
+                                      </Badge>
                                     )}
                                   </div>
+                                  
+                                  {/* Level Requirements Display */}
+                                  {levelCheck && (schedule.requiredLevel || schedule.autoLevelCheck) && (
+                                    <div className="mb-2">
+                                      <div className={`flex items-center gap-1 text-xs ${
+                                        levelCheck.canBook ? 'text-green-700' : 'text-red-700'
+                                      }`}>
+                                        {levelCheck.canBook ? (
+                                          <>
+                                            <CheckCircle2 className="h-3 w-3" />
+                                            <span>Level requirement met</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            {schedule.allowLevelJumpers ? (
+                                              <AlertTriangle className="h-3 w-3" />
+                                            ) : (
+                                              <Lock className="h-3 w-3" />
+                                            )}
+                                            <span>
+                                              Requires Level {levelCheck.requiredLevel} (You: Level {levelCheck.studentLevel})
+                                            </span>
+                                          </>
+                                        )}
+                                        {levelCheck.hasVerification && (
+                                          <Badge variant="outline" className="text-xs">
+                                            Under Review
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Materials Display */}
+                                  {schedule.materials && schedule.materials.length > 0 && (
+                                    <div className="mb-1">
+                                      <div className="flex flex-wrap gap-1">
+                                        {schedule.materials.slice(0, 3).map((material, index) => (
+                                          <span key={index} className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded text-xs">
+                                            {material}
+                                          </span>
+                                        ))}
+                                        {schedule.materials.length > 3 && (
+                                          <span className="text-xs text-muted-foreground">+{schedule.materials.length - 3}</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                    <span className="flex items-center gap-1">
+                                      <Clock className="h-3 w-3" />
+                                      {schedule.duration} min
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <Users className="h-3 w-3" />
+                                      Max {schedule.maxCapacity}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <DollarSign className="h-3 w-3" />
+                                      Rp {calculateSchedulePrice(schedule).toLocaleString('id-ID')}
+                                    </span>
+                                  </div>
                                 </div>
-                              )}
-                              
-                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {schedule.duration} min
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Users className="h-3 w-3" />
-                                  Max {schedule.maxCapacity}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <DollarSign className="h-3 w-3" />
-                                  Rp {calculateSchedulePrice(schedule).toLocaleString('id-ID')}
-                                </span>
+                                <Button
+                                  size="sm"
+                                  onClick={() => openBookingDialog(mentor, schedule)}
+                                  disabled={!displayData.canBook}
+                                  className={displayData.canBook ? '' : 'opacity-50'}
+                                >
+                                  {displayData.canBook ? 'Book' : 'Level Required'}
+                                </Button>
                               </div>
-                            </div>
-                            <Button
-                              size="sm"
-                              onClick={() => openBookingDialog(mentor, schedule)}
-                            >
-                              Book
-                            </Button>
-                          </div>
-                        ))
+                            )
+                          })
                       )}
                       {mentorSchedules.length > 2 && (
                         <p className="text-xs text-muted-foreground text-center">
@@ -1026,6 +1220,36 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
                 </div>
               </div>
               
+              {/* Level Requirements Display */}
+              {selectedSchedule && studentProgress && (selectedSchedule.requiredLevel || selectedSchedule.autoLevelCheck) && (
+                <div className="p-3 bg-white border border-blue-300 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium text-blue-800">Level Requirements</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600">Required Level:</span>
+                      <span className="font-medium ml-2">{selectedSchedule.requiredLevel || 1}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Your Level:</span>
+                      <span className={`font-medium ml-2 ${
+                        studentProgress.currentLevel >= (selectedSchedule.requiredLevel || 1) 
+                          ? 'text-green-600' : 'text-orange-600'
+                      }`}>
+                        {studentProgress.currentLevel}
+                      </span>
+                    </div>
+                  </div>
+                  {selectedSchedule.maxLevelGap && (
+                    <div className="mt-2 text-xs text-gray-600">
+                      Max level gap for group sessions: {selectedSchedule.maxLevelGap} levels
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Materials covered in this session */}
               {selectedSchedule?.materials && selectedSchedule.materials.length > 0 && (
                 <div>
@@ -1413,6 +1637,90 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
               </>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Level Verification Dialog */}
+      <Dialog open={showLevelVerificationDialog} onOpenChange={setShowLevelVerificationDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-blue-600" />
+              Level Verification Request
+            </DialogTitle>
+            <DialogDescription>
+              Request to verify your skills for access to higher-level sessions
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            {studentProgress && (
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="font-semibold text-blue-900 mb-2">Your Current Progress</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-blue-700">Current Level:</span>
+                    <span className="font-medium ml-2">{studentProgress.currentLevel}</span>
+                  </div>
+                  <div>
+                    <span className="text-blue-700">Skills Acquired:</span>
+                    <span className="font-medium ml-2">{studentProgress.skillsAcquired.length}</span>
+                  </div>
+                  <div>
+                    <span className="text-blue-700">Average Score:</span>
+                    <span className="font-medium ml-2">{studentProgress.averageScore || 0}%</span>
+                  </div>
+                  <div>
+                    <span className="text-blue-700">Completed Projects:</span>
+                    <span className="font-medium ml-2">{studentProgress.completedProjects.length}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                <div className="text-sm text-amber-800">
+                  <p className="font-medium mb-2">Level Verification Process</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>You'll be given assignments and projects to demonstrate your skills</li>
+                    <li>Our mentors will review your submissions</li>
+                    <li>Upon approval, you'll gain access to higher-level sessions</li>
+                    <li>This process typically takes 3-5 business days</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+                <div className="text-sm text-green-800">
+                  <p className="font-medium mb-2">What You'll Get</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Access to advanced mentoring sessions</li>
+                    <li>Certification of your verified skill level</li>
+                    <li>Priority booking for specialized sessions</li>
+                    <li>Recognition in your learning profile</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowLevelVerificationDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => selectedSchedule && handleLevelVerificationRequest(selectedSchedule.requiredLevel || 1)}
+              className="gap-2"
+            >
+              <Shield className="h-4 w-4" />
+              Submit Verification Request
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

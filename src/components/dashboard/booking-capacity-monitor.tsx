@@ -97,7 +97,13 @@ export default function BookingCapacityMonitor({ mentorId }: { mentorId: number 
         activeSchedules.forEach((schedule: MentorSchedule) => {
           // Get bookings for this schedule and date
           const dayBookings = bookingsData.filter((booking: Booking) => {
+            // Safe date parsing to handle invalid dates
+            if (!booking.bookingDate) return false
             const bookingDate = new Date(booking.bookingDate)
+            if (isNaN(bookingDate.getTime())) {
+              console.warn('Invalid booking date encountered:', booking.bookingDate, 'in booking:', booking.id)
+              return false
+            }
             return booking.scheduleId === schedule.id &&
                    format(bookingDate, 'yyyy-MM-dd') === dateString &&
                    booking.status !== 'cancelled'
@@ -106,7 +112,13 @@ export default function BookingCapacityMonitor({ mentorId }: { mentorId: number 
           // Group by time slots
           const timeSlots = new Map<string, Booking[]>()
           dayBookings.forEach((booking: Booking) => {
-            const timeSlot = format(new Date(booking.bookingDate), 'HH:mm')
+            // Safe date parsing for time slot formatting
+            const bookingDate = new Date(booking.bookingDate)
+            if (isNaN(bookingDate.getTime())) {
+              console.warn('Skipping invalid date for time slot:', booking.bookingDate)
+              return
+            }
+            const timeSlot = format(bookingDate, 'HH:mm')
             if (!timeSlots.has(timeSlot)) {
               timeSlots.set(timeSlot, [])
             }
@@ -144,6 +156,10 @@ export default function BookingCapacityMonitor({ mentorId }: { mentorId: number 
       capacityData.sort((a, b) => {
         const dateTimeA = new Date(`${a.date} ${a.time}`)
         const dateTimeB = new Date(`${b.date} ${b.time}`)
+        // Handle invalid dates in sorting
+        if (isNaN(dateTimeA.getTime()) || isNaN(dateTimeB.getTime())) {
+          return 0
+        }
         return dateTimeA.getTime() - dateTimeB.getTime()
       })
 
@@ -184,6 +200,10 @@ export default function BookingCapacityMonitor({ mentorId }: { mentorId: number 
 
   const getDateLabel = (dateString: string) => {
     const date = new Date(dateString)
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid date string for label:', dateString)
+      return 'Invalid Date'
+    }
     if (isToday(date)) return 'Hari Ini'
     if (isTomorrow(date)) return 'Besok'
     return format(date, 'dd/MM/yyyy', { locale: localeId })
