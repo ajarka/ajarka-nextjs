@@ -1315,6 +1315,22 @@
       },
       "read": false,
       "createdAt": "2025-09-02T13:44:28.832Z"
+    },
+    {
+      "id": "SLOT_NOTIF_1756921910922_2",
+      "userId": "2",
+      "title": "New Slot Request",
+      "message": "Student has requested a slot on 2025-09-12 at 09:00",
+      "type": "slot_request",
+      "read": false,
+      "createdAt": "2025-09-03T17:51:50.922Z",
+      "metadata": {
+        "requestId": "SLOT_REQ_1756921910867_3_2",
+        "requestType": "new_request",
+        "scheduleId": "1",
+        "requestedDate": "2025-09-12",
+        "requestedTime": "09:00"
+      }
     }
   ],
   "learning_materials": [
@@ -2051,6 +2067,38 @@
       "approvedLevel": null,
       "createdAt": "2024-12-20T09:00:00.000Z",
       "updatedAt": "2024-12-20T09:00:00.000Z"
+    }
+  ],
+  "slot_requests": [
+    {
+      "id": "SLOT_REQ_1735870800000_3_2",
+      "studentId": 3,
+      "mentorId": 2,
+      "scheduleId": 1,
+      "requestedDate": "2025-01-15",
+      "requestedTime": "14:00",
+      "duration": 60,
+      "status": "pending",
+      "studentNotes": "I would really like to have a session at this time if possible. I have specific questions about React hooks that I need help with.",
+      "priority": "normal",
+      "type": "single_session",
+      "createdAt": "2025-01-02T10:00:00.000Z",
+      "updatedAt": "2025-01-02T10:00:00.000Z"
+    },
+    {
+      "id": "SLOT_REQ_1756921910867_3_2",
+      "studentId": 3,
+      "mentorId": "2",
+      "scheduleId": "1",
+      "requestedDate": "2025-09-12",
+      "requestedTime": "09:00",
+      "duration": 60,
+      "status": "pending",
+      "studentNotes": "Tanggal ini bisa ngga ya? Soalnya saya masih kerja.",
+      "priority": "normal",
+      "type": "single_session",
+      "createdAt": "2025-09-03T17:51:50.867Z",
+      "updatedAt": "2025-09-03T17:51:50.867Z"
     }
   ]
 }

@@ -24,11 +24,13 @@ import {
   Globe,
   CheckCircle,
   AlertCircle,
-  BookOpen
+  BookOpen,
+  MessageSquare
 } from "lucide-react"
 import { motion } from "framer-motion"
 import { format, addDays, startOfWeek } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
+import Link from 'next/link'
 import BookingCapacityMonitor from './booking-capacity-monitor'
 import MentorScheduleCalendar from './mentor-schedule-calendar'
 import { NotificationService } from '@/lib/notification-service'
@@ -37,6 +39,7 @@ import { useMeetingGeneration } from '@/hooks/useMeetingGeneration'
 import { AdminService, AdminPricingRule, AdminOfficeLocation } from '@/lib/admin-service'
 import { learningService, type LearningMaterial } from '@/lib/learning-service'
 import MentorScheduleDialog from './mentor-schedule-manager-dialog'
+import MentorSlotRequests from './mentor-slot-requests'
 
 interface MentorSchedule {
   id?: number
@@ -447,10 +450,18 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
           </p>
         </div>
         
-        <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
-          <Plus className="h-4 w-4" />
-          Buat Jadwal Baru
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" asChild>
+            <Link href="#slot-requests">
+              <MessageSquare className="h-4 w-4" />
+              Slot Requests
+            </Link>
+          </Button>
+          <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Buat Jadwal Baru
+          </Button>
+        </div>
         
         <MentorScheduleDialog
           isOpen={isDialogOpen}
@@ -612,6 +623,11 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
       {/* Capacity Monitor */}
       <div className="mt-8">
         <BookingCapacityMonitor mentorId={mentorId} />
+      </div>
+
+      {/* Slot Requests Section */}
+      <div id="slot-requests" className="mt-8">
+        <MentorSlotRequests mentorId={mentorId} />
       </div>
     </div>
   )

@@ -23,7 +23,8 @@ import {
   AlertTriangle,
   TrendingUp,
   Award,
-  Lock
+  Lock,
+  MessageSquare
 } from "lucide-react"
 import { motion } from "framer-motion"
 import { format, addDays, startOfDay, isToday, isTomorrow, addMinutes, setHours, setMinutes } from 'date-fns'
@@ -49,6 +50,8 @@ import { PaymentService, PaymentRequest } from '@/lib/payment-service'
 import { BundleService, BundlePackage, StudentSubscription } from '@/lib/bundle-service'
 import PaymentButton from '@/components/payment/payment-button'
 import { StudentLevelService, MentorScheduleWithLevels, LevelCheckResult, StudentProgress } from '@/lib/student-level-service'
+import { SlotRequestService, SlotRequest } from '@/lib/slot-request-service'
+import FlexibleCalendar from '@/components/ui/flexible-calendar'
 
 interface Mentor {
   id: number
@@ -124,6 +127,16 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
   const [recommendedSchedules, setRecommendedSchedules] = useState<MentorSchedule[]>([])
   const [showAllSchedules, setShowAllSchedules] = useState(false)
   
+  // Slot request state
+  const [slotRequests, setSlotRequests] = useState<SlotRequest[]>([])
+  const [showSlotRequestDialog, setShowSlotRequestDialog] = useState(false)
+  const [requestingSlot, setRequestingSlot] = useState(false)
+  const [slotRequestData, setSlotRequestData] = useState({
+    date: null as Date | null,
+    time: '',
+    notes: ''
+  })
+  
   // Admin pricing rules
   const [adminPricingRules, setAdminPricingRules] = useState<AdminPricingRule[]>([])
   
@@ -148,6 +161,7 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
     fetchAdminPricingRules()
     fetchBundleData()
     fetchStudentProgress()
+    fetchSlotRequests()
   }, [])
 
   useEffect(() => {
@@ -224,6 +238,75 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
     } catch (error) {
       console.error('Error requesting level verification:', error)
       alert('Failed to submit level verification request. Please try again.')
+    }
+  }
+
+  const fetchSlotRequests = async () => {
+    try {
+      const requests = await SlotRequestService.getStudentSlotRequests(studentId)
+      setSlotRequests(requests)
+    } catch (error) {
+      console.error('Error fetching slot requests:', error)
+    }
+  }
+
+  const handleSlotRequest = async (date: Date) => {
+    if (!selectedSchedule || !selectedMentor) return
+    
+    setSlotRequestData({
+      date,
+      time: '09:00', // Default time
+      notes: ''
+    })
+    setShowSlotRequestDialog(true)
+  }
+
+  const submitSlotRequest = async () => {
+    if (!slotRequestData.date || !slotRequestData.time || !selectedSchedule || !selectedMentor) {
+      alert('Please fill in all required fields')
+      return
+    }
+
+    setRequestingSlot(true)
+    try {
+      await SlotRequestService.createSlotRequest(
+        studentId,
+        selectedMentor.id,
+        selectedSchedule.id,
+        slotRequestData.date,
+        slotRequestData.time,
+        selectedSchedule.duration,
+        slotRequestData.notes
+      )
+
+      setShowSlotRequestDialog(false)
+      setSlotRequestData({ date: null, time: '', notes: '' })
+      await fetchSlotRequests()
+      
+      alert('Slot request submitted successfully! The mentor will review your request and respond soon.')
+    } catch (error) {
+      console.error('Error submitting slot request:', error)
+      alert('Failed to submit slot request. Please try again.')
+    } finally {
+      setRequestingSlot(false)
+    }
+  }
+
+  const getDateAvailabilityWithRequests = (date: Date) => {
+    const baseAvailability = getDateAvailabilityStatus(date)
+    
+    // Check if there are any pending/approved slot requests for this date
+    const dateString = format(date, 'yyyy-MM-dd')
+    const hasRequests = slotRequests.some(request => 
+      request.mentorId === selectedMentor?.id &&
+      request.scheduleId === selectedSchedule?.id &&
+      request.requestedDate === dateString &&
+      (request.status === 'pending' || request.status === 'approved')
+    )
+
+    return {
+      ...baseAvailability,
+      hasRequests
     }
   }
 
@@ -1265,105 +1348,43 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
               )}
             </div>
 
-            {/* Date Selection */}
+            {/* Date Selection with Flexible Calendar */}
             <div className="mb-6">
               <Label className="text-base font-semibold mb-3 flex items-center gap-2">
                 <CalendarDays className="h-5 w-5" />
                 Step 1: Select Date
               </Label>
               
-              {/* Availability Legend */}
-              <div className="mb-4 p-3 bg-gray-50 rounded-lg border">
-                <div className="flex flex-wrap gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
-                    <span>Available</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
-                    <span>Partially Booked</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                      <div className="w-1 h-1 bg-white rounded-full"></div>
-                    </div>
-                    <span>Fully Booked</span>
+              <FlexibleCalendar
+                selectedDate={bookingForm.selectedDate}
+                onDateSelect={handleDateSelect}
+                onRequestSlot={handleSlotRequest}
+                getDateAvailability={getDateAvailabilityWithRequests}
+                showRequestOption={true}
+                className="w-full"
+              />
+
+              {/* Show existing slot requests */}
+              {slotRequests.length > 0 && (
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-medium text-blue-900 mb-2">Your Recent Slot Requests</h4>
+                  <div className="space-y-2">
+                    {slotRequests
+                      .filter(req => req.mentorId === selectedMentor?.id && req.scheduleId === selectedSchedule?.id)
+                      .slice(0, 3)
+                      .map((request) => (
+                        <div key={request.id} className="flex items-center justify-between text-sm">
+                          <span>{request.requestedDate} at {request.requestedTime}</span>
+                          <Badge variant={
+                            request.status === 'pending' ? 'secondary' :
+                            request.status === 'approved' ? 'default' : 'destructive'
+                          }>
+                            {request.status}
+                          </Badge>
+                        </div>
+                      ))}
                   </div>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {availableDates.slice(0, 15).map((date) => {
-                  const isSelected = bookingForm.selectedDate && 
-                    format(date, 'yyyy-MM-dd') === format(bookingForm.selectedDate, 'yyyy-MM-dd')
-                  const availability = getDateAvailabilityStatus(date)
-                  
-                  // Define colors and styles based on availability
-                  const getStatusStyle = (status: string, selected: boolean) => {
-                    if (selected) return 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600'
-                    
-                    switch (status) {
-                      case 'available':
-                        return 'border-green-300 bg-green-50 hover:bg-green-100 text-green-800'
-                      case 'partial':
-                        return 'border-orange-300 bg-orange-50 hover:bg-orange-100 text-orange-800'
-                      case 'full':
-                        return 'border-red-300 bg-red-50 hover:bg-red-100 text-red-800 opacity-75'
-                      default:
-                        return 'border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-500'
-                    }
-                  }
-
-                  const getStatusIndicator = (status: string) => {
-                    switch (status) {
-                      case 'available':
-                        return <div className="w-2 h-2 bg-green-500 rounded-full absolute top-1 right-1"></div>
-                      case 'partial':
-                        return <div className="w-2 h-2 bg-orange-500 rounded-full absolute top-1 right-1"></div>
-                      case 'full':
-                        return <div className="w-2 h-2 bg-red-500 rounded-full absolute top-1 right-1"></div>
-                      default:
-                        return null
-                    }
-                  }
-                  
-                  return (
-                    <Button
-                      key={format(date, 'yyyy-MM-dd')}
-                      variant="outline"
-                      className={`h-auto py-3 px-2 flex flex-col gap-1 relative transition-all duration-200 ${
-                        getStatusStyle(availability.status, isSelected)
-                      }`}
-                      onClick={() => handleDateSelect(date)}
-                      disabled={availability.status === 'full'}
-                    >
-                      {getStatusIndicator(availability.status)}
-                      <span className="text-xs font-medium">
-                        {format(date, 'MMM', { locale: localeId })}
-                      </span>
-                      <span className="text-lg font-bold">
-                        {format(date, 'd')}
-                      </span>
-                      <span className="text-xs">
-                        {format(date, 'EEE', { locale: localeId })}
-                      </span>
-                      {availability.status !== 'unavailable' && (
-                        <span className="text-xs font-medium mt-1">
-                          {availability.availableSlots}/{availability.totalSlots} slots
-                        </span>
-                      )}
-                    </Button>
-                  )
-                })}
-              </div>
-              {availableDates.length > 15 && (
-                <p className="text-sm text-muted-foreground mt-2 text-center">
-                  Showing first 15 available dates
-                </p>
               )}
             </div>
 
@@ -1719,6 +1740,126 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
             >
               <Shield className="h-4 w-4" />
               Submit Verification Request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Slot Request Dialog */}
+      <Dialog open={showSlotRequestDialog} onOpenChange={setShowSlotRequestDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-blue-600" />
+              Request Time Slot
+            </DialogTitle>
+            <DialogDescription>
+              Request a specific time slot from the mentor for {slotRequestData.date && format(slotRequestData.date, 'EEEE, MMMM d, yyyy', { locale: localeId })}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            {/* Selected Details */}
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-blue-700">Session:</span>
+                  <div className="font-medium">{selectedSchedule?.title}</div>
+                </div>
+                <div>
+                  <span className="text-blue-700">Mentor:</span>
+                  <div className="font-medium">{selectedMentor?.name}</div>
+                </div>
+                <div>
+                  <span className="text-blue-700">Duration:</span>
+                  <div className="font-medium">{selectedSchedule?.duration} minutes</div>
+                </div>
+                <div>
+                  <span className="text-blue-700">Date:</span>
+                  <div className="font-medium">
+                    {slotRequestData.date && format(slotRequestData.date, 'MMM d, yyyy', { locale: localeId })}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Time Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="requestTime">Preferred Time *</Label>
+              <select
+                id="requestTime"
+                value={slotRequestData.time}
+                onChange={(e) => setSlotRequestData(prev => ({ ...prev, time: e.target.value }))}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                required
+              >
+                <option value="">Select preferred time</option>
+                {Array.from({ length: 11 }, (_, i) => {
+                  const hour = (8 + i).toString().padStart(2, '0')
+                  return (
+                    <option key={hour} value={`${hour}:00`}>
+                      {hour}:00
+                    </option>
+                  )
+                })}
+              </select>
+              <p className="text-xs text-gray-500">
+                Choose your preferred start time. The mentor may suggest an alternative.
+              </p>
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="requestNotes">Message to Mentor (Optional)</Label>
+              <Textarea
+                id="requestNotes"
+                placeholder="Explain why you need this specific time slot, or add any additional context..."
+                value={slotRequestData.notes}
+                onChange={(e) => setSlotRequestData(prev => ({ ...prev, notes: e.target.value }))}
+                rows={3}
+              />
+              <p className="text-xs text-gray-500">
+                Help the mentor understand your scheduling needs or learning goals.
+              </p>
+            </div>
+
+            {/* Information */}
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-amber-800">
+                  <p className="font-medium mb-1">How slot requests work:</p>
+                  <ul className="list-disc list-inside text-xs space-y-1">
+                    <li>Your request will be sent to the mentor for review</li>
+                    <li>The mentor can approve, suggest alternatives, or decline</li>
+                    <li>You'll receive a notification with their response</li>
+                    <li>Approved slots will become available for booking</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSlotRequestDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={submitSlotRequest}
+              disabled={requestingSlot || !slotRequestData.time}
+              className="gap-2"
+            >
+              {requestingSlot ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  Sending Request...
+                </>
+              ) : (
+                <>
+                  <MessageSquare className="h-4 w-4" />
+                  Send Request
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Calendar, momentLocalizer, View, Views } from 'react-big-calendar'
 import moment from 'moment'
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import 'react-big-calendar/lib/css/react-big-calendar.css'
+import { SlotRequestService } from '@/lib/slot-request-service'
 
 const localizer = momentLocalizer(moment)
 
@@ -34,7 +35,7 @@ interface ScheduleEvent {
   start: Date
   end: Date
   resource?: {
-    type: 'availability' | 'booking' | 'blocked'
+    type: 'availability' | 'booking' | 'blocked' | 'slot_request'
     scheduleId?: number
     capacity?: number
     currentBookings?: number
@@ -43,6 +44,7 @@ interface ScheduleEvent {
     startTime: string
     endTime: string
     isRecurring: boolean
+    slotRequest?: any
   }
 }
 
@@ -94,6 +96,7 @@ export default function MentorScheduleCalendar({
   const [selectedAvailability, setSelectedAvailability] = useState<any>(null)
   const [saving, setSaving] = useState(false)
   const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add')
+  const [slotRequests, setSlotRequests] = useState<any[]>([])
 
   const [availabilityForm, setAvailabilityForm] = useState<AvailabilityForm>({
     dayOfWeek: 1,
@@ -102,6 +105,23 @@ export default function MentorScheduleCalendar({
     scheduleId: scheduleId,
     isRecurring: true
   })
+
+  useEffect(() => {
+    fetchSlotRequests()
+  }, [mentorId, scheduleId])
+
+  const fetchSlotRequests = async () => {
+    try {
+      const requests = await SlotRequestService.getMentorSlotRequests(mentorId)
+      const relevantRequests = requests.filter(request => 
+        request.scheduleId === scheduleId && request.status === 'pending'
+      )
+      setSlotRequests(relevantRequests)
+    } catch (error) {
+      console.error('Error fetching slot requests:', error)
+      setSlotRequests([])
+    }
+  }
 
   const handleNavigate = useCallback((newDate: Date) => {
     setDate(newDate)
@@ -173,8 +193,35 @@ export default function MentorScheduleCalendar({
       })
     })
 
+    // Add slot request events
+    slotRequests.forEach(request => {
+      const requestDate = new Date(request.requestedDate)
+      const [startHour, startMinute] = request.requestedTime.split(':')
+      const startDateTime = new Date(requestDate)
+      startDateTime.setHours(parseInt(startHour), parseInt(startMinute))
+      
+      const endDateTime = new Date(startDateTime)
+      endDateTime.setMinutes(endDateTime.getMinutes() + request.duration)
+
+      events.push({
+        id: `slot-request-${request.id}`,
+        title: `Slot Request (${request.requestedTime})`,
+        start: startDateTime,
+        end: endDateTime,
+        resource: {
+          type: 'slot_request',
+          scheduleId: request.scheduleId,
+          dayOfWeek: requestDate.getDay(),
+          startTime: request.requestedTime,
+          endTime: moment(endDateTime).format('HH:mm'),
+          isRecurring: false,
+          slotRequest: request
+        }
+      })
+    })
+
     return events
-  }, [availabilities, bookings, scheduleId])
+  }, [availabilities, bookings, scheduleId, slotRequests])
 
   const handleSelectSlot = useCallback((slotInfo: any) => {
     setSelectedSlot(slotInfo)
@@ -202,6 +249,12 @@ export default function MentorScheduleCalendar({
       })
       setDialogMode('edit')
       setShowEditDialog(true)
+    } else if (event.resource?.type === 'slot_request') {
+      // Navigate to slot requests section to handle this request
+      const slotRequestsSection = document.getElementById('slot-requests')
+      if (slotRequestsSection) {
+        slotRequestsSection.scrollIntoView({ behavior: 'smooth' })
+      }
     }
   }, [])
 
@@ -295,6 +348,11 @@ export default function MentorScheduleCalendar({
       case 'blocked':
         backgroundColor = '#6b7280'  // Gray for blocked
         borderColor = '#4b5563'
+        color = 'white'
+        break
+      case 'slot_request':
+        backgroundColor = '#f59e0b'  // Orange for slot requests
+        borderColor = '#d97706'
         color = 'white'
         break
     }
@@ -468,9 +526,13 @@ export default function MentorScheduleCalendar({
             <div className="w-4 h-4 bg-gray-500 rounded shadow-sm"></div>
             <span>Blocked</span>
           </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-orange-500 rounded shadow-sm"></div>
+            <span>Slot Requests</span>
+          </div>
         </div>
         <div className="text-center text-sm text-muted-foreground">
-          💡 Click on empty slots to add availability • Click on green slots to edit or delete
+          💡 Click on empty slots to add availability • Click on green slots to edit or delete • Click on orange slots to handle student requests
         </div>
       </div>
 
