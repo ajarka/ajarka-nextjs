@@ -1349,6 +1349,64 @@
         "Use proper HTML5 elements",
         "Create accessible web content"
       ],
+      "content": {
+        "introduction": "# HTML5 Semantic Elements: Building Meaningful Web Structures\n\nHTML5 semantic elements are the foundation of modern, accessible web development. Unlike generic containers like `<div>` and `<span>`, semantic elements provide **meaning** to your content, making it easier for browsers, screen readers, and search engines to understand your page structure.\n\n## Why Semantic HTML Matters\n\n?? **Accessibility**: Screen readers can navigate your content more effectively\n?? **SEO**: Search engines better understand your content hierarchy\n?? **Developer Experience**: Code becomes self-documenting and maintainable\n?? **Cross-platform**: Better support across different devices and browsers",
+        "visualExample": {
+          "title": "Before vs After: Semantic Structure",
+          "before": "<!-- ? Non-semantic approach -->\n<div class=\"header\">\n  <div class=\"nav\">Navigation</div>\n</div>\n<div class=\"content\">\n  <div class=\"article\">\n    <div class=\"title\">Article Title</div>\n    <div class=\"content\">Article content...</div>\n  </div>\n</div>\n<div class=\"footer\">Footer content</div>",
+          "after": "<!-- ? Semantic approach -->\n<header>\n  <nav>Navigation</nav>\n</header>\n<main>\n  <article>\n    <h1>Article Title</h1>\n    <p>Article content...</p>\n  </article>\n</main>\n<footer>Footer content</footer>"
+        },
+        "interactiveDemo": {
+          "title": "Try It Yourself: Build a Blog Post Structure",
+          "instructions": "Use the correct semantic elements to structure this blog post content:",
+          "template": "<!-- Your task: Replace the div elements with appropriate semantic elements -->\n<div>\n  <div>My Amazing Blog</div>\n  <div>\n    <div>Home</div>\n    <div>About</div>\n    <div>Contact</div>\n  </div>\n</div>\n<div>\n  <div>\n    <div>10 Tips for Better Web Development</div>\n    <div>Published on March 15, 2024</div>\n    <div>\n      <div>Introduction</div>\n      <div>In this article, we'll explore...</div>\n    </div>\n  </div>\n  <div>\n    <div>Related Articles</div>\n    <div>Article 1</div>\n    <div>Article 2</div>\n  </div>\n</div>\n<div>� 2024 My Blog. All rights reserved.</div>",
+          "solution": "<header>\n  <h1>My Amazing Blog</h1>\n  <nav>\n    <a href=\"/\">Home</a>\n    <a href=\"/about\">About</a>\n    <a href=\"/contact\">Contact</a>\n  </nav>\n</header>\n<main>\n  <article>\n    <h2>10 Tips for Better Web Development</h2>\n    <time datetime=\"2024-03-15\">Published on March 15, 2024</time>\n    <section>\n      <h3>Introduction</h3>\n      <p>In this article, we'll explore...</p>\n    </section>\n  </article>\n  <aside>\n    <h3>Related Articles</h3>\n    <ul>\n      <li>Article 1</li>\n      <li>Article 2</li>\n    </ul>\n  </aside>\n</main>\n<footer>� 2024 My Blog. All rights reserved.</footer>"
+        },
+        "keyElements": [
+          {
+            "element": "<header>",
+            "description": "Represents introductory content or navigational aids",
+            "example": "<header><h1>Site Title</h1><nav>...</nav></header>",
+            "useCase": "Site headers, article headers, section headers"
+          },
+          {
+            "element": "<nav>",
+            "description": "Contains navigation links for the site or page",
+            "example": "<nav><ul><li><a href=\"/home\">Home</a></li></ul></nav>",
+            "useCase": "Main navigation, breadcrumbs, table of contents"
+          },
+          {
+            "element": "<main>",
+            "description": "The dominant content of the page (only one per page)",
+            "example": "<main><article>...</article></main>",
+            "useCase": "Primary page content, excluding headers/footers/sidebars"
+          },
+          {
+            "element": "<article>",
+            "description": "Self-contained, independently distributable content",
+            "example": "<article><h2>Blog Post</h2><p>Content...</p></article>",
+            "useCase": "Blog posts, news articles, forum posts, comments"
+          },
+          {
+            "element": "<section>",
+            "description": "Thematic grouping of content with its own heading",
+            "example": "<section><h3>Chapter 1</h3><p>...</p></section>",
+            "useCase": "Document sections, chapters, tabs in a tabbed dialog"
+          },
+          {
+            "element": "<aside>",
+            "description": "Content indirectly related to the main content",
+            "example": "<aside><h4>Related Links</h4><ul>...</ul></aside>",
+            "useCase": "Sidebars, pull quotes, related links, advertisements"
+          },
+          {
+            "element": "<footer>",
+            "description": "Footer information for its nearest sectioning element",
+            "example": "<footer><p>� 2024 Company</p></footer>",
+            "useCase": "Page footers, article footers, copyright information"
+          }
+        ]
+      },
       "resources": [
         {
           "type": "video",
@@ -1375,7 +1433,7 @@
       "difficulty": "beginner",
       "isActive": true,
       "createdAt": "2024-12-23T00:00:00.000Z",
-      "updatedAt": "2024-12-23T00:00:00.000Z"
+      "updatedAt": "2025-01-03T10:30:00.000Z"
     },
     {
       "id": "MAT-FE-CSS-001",
@@ -1394,6 +1452,64 @@
         "Master Flexbox layout system",
         "Create responsive designs"
       ],
+      "content": {
+        "introduction": "# CSS Fundamentals & Flexbox: Styling the Modern Web\n\nCSS (Cascading Style Sheets) is the language that brings life to your HTML structure. From basic styling to complex layouts, CSS is essential for creating beautiful, responsive websites. In this material, we focus on **CSS Fundamentals** and the powerful **Flexbox layout system**.\n\n## Why Master CSS?\n\n?? **Visual Design**: Transform plain HTML into beautiful interfaces\n?? **Responsive Design**: Create layouts that work on any device\n? **Performance**: Efficient styling leads to faster load times\n?? **Maintainability**: Well-structured CSS is easy to modify and scale",
+        "visualExample": {
+          "title": "Flexbox Layout Transformation",
+          "before": "/* ? Old way: Float-based layout */\n.container {\n  width: 100%;\n}\n.item {\n  float: left;\n  width: 33.33%;\n  margin-right: 2%;\n}\n.item:last-child {\n  margin-right: 0;\n}\n/* Clearfix hack needed */\n.container::after {\n  content: \"\";\n  display: table;\n  clear: both;\n}",
+          "after": "/* ? Modern way: Flexbox layout */\n.container {\n  display: flex;\n  gap: 1rem;\n}\n.item {\n  flex: 1;\n}\n/* That is it! Clean and simple */\n\n/* Responsive with media queries */\n@media (max-width: 768px) {\n  .container {\n    flex-direction: column;\n  }\n}"
+        },
+        "interactiveDemo": {
+          "title": "Build a Navigation Bar with Flexbox",
+          "instructions": "Create a responsive navigation bar using Flexbox properties:",
+          "template": "<!-- HTML Structure -->\n<nav class=\"navbar\">\n  <div class=\"nav-brand\">MyBrand</div>\n  <ul class=\"nav-menu\">\n    <li><a href=\"#home\">Home</a></li>\n    <li><a href=\"#about\">About</a></li>\n    <li><a href=\"#services\">Services</a></li>\n    <li><a href=\"#contact\">Contact</a></li>\n  </ul>\n  <button class=\"nav-toggle\">?</button>\n</nav>\n\n/* CSS Challenge: Make this responsive with Flexbox */\n.navbar {\n  /* Add your Flexbox properties here */\n}\n\n.nav-menu {\n  /* Style the menu list */\n}\n\n@media (max-width: 768px) {\n  /* Make it mobile-friendly */\n}",
+          "solution": ".navbar {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  padding: 1rem 2rem;\n  background: #fff;\n  box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n}\n\n.nav-brand {\n  font-size: 1.5rem;\n  font-weight: bold;\n  color: #2563eb;\n}\n\n.nav-menu {\n  display: flex;\n  list-style: none;\n  gap: 2rem;\n  margin: 0;\n  padding: 0;\n}\n\n.nav-menu a {\n  text-decoration: none;\n  color: #374151;\n  font-weight: 500;\n  transition: color 0.3s;\n}\n\n.nav-menu a:hover {\n  color: #2563eb;\n}\n\n.nav-toggle {\n  display: none;\n  background: none;\n  border: none;\n  font-size: 1.5rem;\n  cursor: pointer;\n}\n\n@media (max-width: 768px) {\n  .nav-menu {\n    display: none;\n  }\n  \n  .nav-toggle {\n    display: block;\n  }\n  \n  /* JavaScript would toggle this class */\n  .nav-menu.active {\n    display: flex;\n    position: absolute;\n    top: 100%;\n    left: 0;\n    width: 100%;\n    flex-direction: column;\n    background: white;\n    box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n    padding: 1rem;\n  }\n}"
+        },
+        "keyElements": [
+          {
+            "property": "display: flex",
+            "description": "Creates a flex container, enabling flexbox layout for its children",
+            "example": ".container { display: flex; }",
+            "useCase": "Convert any element into a flex container"
+          },
+          {
+            "property": "justify-content",
+            "description": "Controls horizontal alignment of flex items",
+            "example": "justify-content: space-between; /* or center, flex-start, flex-end */",
+            "useCase": "Distribute items along the main axis"
+          },
+          {
+            "property": "align-items",
+            "description": "Controls vertical alignment of flex items",
+            "example": "align-items: center; /* or flex-start, flex-end, stretch */",
+            "useCase": "Align items along the cross axis"
+          },
+          {
+            "property": "flex-direction",
+            "description": "Sets the direction of the main axis (row or column)",
+            "example": "flex-direction: column; /* or row, row-reverse, column-reverse */",
+            "useCase": "Change layout direction, especially for responsive design"
+          },
+          {
+            "property": "flex",
+            "description": "Shorthand for flex-grow, flex-shrink, and flex-basis",
+            "example": "flex: 1; /* or flex: 0 0 200px; */",
+            "useCase": "Control how items grow and shrink"
+          },
+          {
+            "property": "gap",
+            "description": "Sets spacing between flex items",
+            "example": "gap: 1rem; /* or gap: 10px 20px; */",
+            "useCase": "Add consistent spacing without margins"
+          },
+          {
+            "property": "flex-wrap",
+            "description": "Controls whether items wrap to new lines",
+            "example": "flex-wrap: wrap; /* or nowrap, wrap-reverse */",
+            "useCase": "Create responsive layouts that wrap on smaller screens"
+          }
+        ]
+      },
       "resources": [
         {
           "type": "video",
@@ -1436,6 +1552,64 @@
         "Understand DOM manipulation",
         "Work with async/await and Promises"
       ],
+      "content": {
+        "introduction": "# JavaScript ES6+ Fundamentals: Programming the Interactive Web\n\nJavaScript is the programming language of the web, enabling dynamic interactions and modern web applications. This material covers **ES6+ features**, **DOM manipulation**, and **asynchronous programming** - the essential skills for modern frontend development.\n\n## Why JavaScript Matters\n\n⚡ **Interactivity**: Make your websites dynamic and responsive to user actions\n🚀 **Modern Syntax**: ES6+ features make code cleaner and more powerful\n🌐 **Everywhere**: Runs in browsers, servers, mobile apps, and desktop applications\n🔧 **Essential Skill**: Required for all modern web development frameworks",
+        "visualExample": {
+          "title": "Modern JavaScript vs Old JavaScript",
+          "before": "// ❌ Old JavaScript (ES5)\nvar users = [\n  { name: \"John\", age: 25 },\n  { name: \"Jane\", age: 30 },\n  { name: \"Bob\", age: 35 }\n];\n\nvar adults = [];\nfor (var i = 0; i < users.length; i++) {\n  if (users[i].age >= 18) {\n    adults.push(users[i].name);\n  }\n}\n\nvar getUserData = function(id) {\n  return new Promise(function(resolve, reject) {\n    setTimeout(function() {\n      if (id > 0) {\n        resolve({ id: id, name: \"User \" + id });\n      } else {\n        reject(new Error(\"Invalid ID\"));\n      }\n    }, 1000);\n  });\n};",
+          "after": "// ✅ Modern JavaScript (ES6+)\nconst users = [\n  { name: \"John\", age: 25 },\n  { name: \"Jane\", age: 30 },\n  { name: \"Bob\", age: 35 }\n];\n\n// Array methods and destructuring\nconst adults = users\n  .filter(user => user.age >= 18)\n  .map(({ name }) => name);\n\n// Async/await and arrow functions\nconst getUserData = async (id) => {\n  return new Promise((resolve, reject) => {\n    setTimeout(() => {\n      if (id > 0) {\n        resolve({ id, name: `User ${id}` });\n      } else {\n        reject(new Error(\"Invalid ID\"));\n      }\n    }, 1000);\n  });\n};\n\n// Usage with async/await\ntry {\n  const user = await getUserData(1);\n  console.log(user);\n} catch (error) {\n  console.error(error.message);\n}"
+        },
+        "interactiveDemo": {
+          "title": "Build a Dynamic Task List with Modern JavaScript",
+          "instructions": "Create an interactive task manager using ES6+ features and DOM manipulation:",
+          "template": "<!-- HTML -->\n<div class=\"task-manager\">\n  <h2>My Tasks</h2>\n  <form id=\"task-form\">\n    <input type=\"text\" id=\"task-input\" placeholder=\"Add a new task...\" required>\n    <button type=\"submit\">Add Task</button>\n  </form>\n  <ul id=\"task-list\"></ul>\n</div>\n\n/* CSS */\n.task-manager {\n  max-width: 400px;\n  margin: 2rem auto;\n  padding: 1rem;\n}\n\n.task {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  padding: 0.5rem;\n  margin: 0.5rem 0;\n  border: 1px solid #ddd;\n  border-radius: 4px;\n}\n\n.task.completed {\n  text-decoration: line-through;\n  opacity: 0.6;\n}\n\n// JavaScript Challenge - Fill in the functions:\nclass TaskManager {\n  constructor() {\n    this.tasks = [];\n    this.init();\n  }\n\n  init() {\n    // Add event listeners\n  }\n\n  addTask(text) {\n    // Create task object and add to array\n  }\n\n  toggleTask(id) {\n    // Toggle task completion\n  }\n\n  deleteTask(id) {\n    // Remove task from array\n  }\n\n  render() {\n    // Update DOM with current tasks\n  }\n}\n\nconst taskManager = new TaskManager();",
+          "solution": "class TaskManager {\n  constructor() {\n    this.tasks = [];\n    this.taskIdCounter = 0;\n    this.init();\n  }\n\n  init() {\n    const form = document.getElementById(\"task-form\");\n    form.addEventListener(\"submit\", (e) => {\n      e.preventDefault();\n      const input = document.getElementById(\"task-input\");\n      if (input.value.trim()) {\n        this.addTask(input.value.trim());\n        input.value = \"\";\n      }\n    });\n  }\n\n  addTask(text) {\n    const task = {\n      id: ++this.taskIdCounter,\n      text,\n      completed: false,\n      createdAt: new Date()\n    };\n    this.tasks.push(task);\n    this.render();\n  }\n\n  toggleTask(id) {\n    const task = this.tasks.find(t => t.id === id);\n    if (task) {\n      task.completed = !task.completed;\n      this.render();\n    }\n  }\n\n  deleteTask(id) {\n    this.tasks = this.tasks.filter(t => t.id !== id);\n    this.render();\n  }\n\n  render() {\n    const taskList = document.getElementById(\"task-list\");\n    taskList.innerHTML = \"\";\n    \n    this.tasks.forEach(task => {\n      const li = document.createElement(\"li\");\n      li.className = `task ${task.completed ? \"completed\" : \"\"}`;\n      \n      li.innerHTML = `\n        <span>${task.text}</span>\n        <div>\n          <button onclick=\"taskManager.toggleTask(${task.id})\">\n            ${task.completed ? \"Undo\" : \"Complete\"}\n          </button>\n          <button onclick=\"taskManager.deleteTask(${task.id})\">Delete</button>\n        </div>\n      `;\n      \n      taskList.appendChild(li);\n    });\n  }\n}\n\nconst taskManager = new TaskManager();"
+        },
+        "keyElements": [
+          {
+            "concept": "const & let",
+            "description": "Block-scoped variable declarations replacing var",
+            "example": "const PI = 3.14159; // immutable\nlet count = 0; // mutable, block-scoped",
+            "useCase": "Use const by default, let when you need to reassign"
+          },
+          {
+            "concept": "Arrow Functions",
+            "description": "Shorter syntax for functions with lexical this binding",
+            "example": "const add = (a, b) => a + b;\nconst users = data.map(user => user.name);",
+            "useCase": "Callbacks, array methods, short functions"
+          },
+          {
+            "concept": "Template Literals",
+            "description": "String interpolation with backticks",
+            "example": "const message = `Hello ${name}, you have ${count} messages`;",
+            "useCase": "Dynamic strings, multiline strings, HTML templates"
+          },
+          {
+            "concept": "Destructuring",
+            "description": "Extract values from arrays or properties from objects",
+            "example": "const {name, age} = user;\nconst [first, second] = array;",
+            "useCase": "Function parameters, extracting data from objects/arrays"
+          },
+          {
+            "concept": "Async/Await",
+            "description": "Write asynchronous code that looks synchronous",
+            "example": "const fetchData = async () => {\n  try {\n    const response = await fetch(\"/api/data\");\n    return await response.json();\n  } catch (error) {\n    console.error(error);\n  }\n};",
+            "useCase": "API calls, file operations, any asynchronous operations"
+          },
+          {
+            "concept": "Array Methods",
+            "description": "Functional programming methods for arrays",
+            "example": "const adults = users\n  .filter(user => user.age >= 18)\n  .map(user => user.name)\n  .sort();",
+            "useCase": "Data transformation, filtering, searching arrays"
+          },
+          {
+            "concept": "DOM Manipulation",
+            "description": "Dynamically modify HTML elements with JavaScript",
+            "example": "const element = document.querySelector(\".my-class\");\nelement.textContent = \"New content\";\nelement.addEventListener(\"click\", handleClick);",
+            "useCase": "Interactive websites, dynamic content, user interfaces"
+          }
+        ]
+      },
       "resources": [
         {
           "type": "video",
@@ -1478,6 +1652,64 @@
         "Master React hooks (useState, useEffect)",
         "Manage component state and props"
       ],
+      "content": {
+        "introduction": "# React Components & Hooks: Building Modern User Interfaces\n\nReact is the most popular JavaScript library for building user interfaces. It revolutionizes web development with its **component-based architecture**, **declarative programming model**, and powerful **hooks system**. Master React to build fast, interactive, and maintainable web applications.\n\n## Why React Dominates Frontend Development\n\n🧩 **Component-Based**: Build encapsulated components that manage their own state\n🔄 **Declarative**: Describe what the UI should look like, React handles the how\n⚡ **Fast**: Virtual DOM ensures optimal performance\n🔧 **Ecosystem**: Massive community and rich ecosystem of tools",
+        "visualExample": {
+          "title": "Class Components vs Functional Components with Hooks",
+          "before": "// ❌ Old way: Class Components\nclass Counter extends React.Component {\n  constructor(props) {\n    super(props);\n    this.state = {\n      count: 0,\n      title: 'My Counter'\n    };\n  }\n\n  componentDidMount() {\n    document.title = this.state.title;\n  }\n\n  componentDidUpdate() {\n    document.title = `${this.state.title}: ${this.state.count}`;\n  }\n\n  increment = () => {\n    this.setState({ count: this.state.count + 1 });\n  }\n\n  render() {\n    return (\n      <div>\n        <h2>{this.state.title}</h2>\n        <p>Count: {this.state.count}</p>\n        <button onClick={this.increment}>+1</button>\n      </div>\n    );\n  }\n}",
+          "after": "// ✅ Modern way: Functional Components with Hooks\nimport React, { useState, useEffect } from 'react';\n\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  const [title] = useState('My Counter');\n\n  // Replaces both componentDidMount and componentDidUpdate\n  useEffect(() => {\n    document.title = count === 0 \n      ? title \n      : `${title}: ${count}`;\n  }, [title, count]);\n\n  const increment = () => {\n    setCount(count + 1);\n  };\n\n  return (\n    <div>\n      <h2>{title}</h2>\n      <p>Count: {count}</p>\n      <button onClick={increment}>+1</button>\n    </div>\n  );\n}\n\nexport default Counter;"
+        },
+        "interactiveDemo": {
+          "title": "Build a Todo App with React Hooks",
+          "instructions": "Create a complete todo application using useState and useEffect hooks:",
+          "template": "import React, { useState, useEffect } from 'react';\n\nfunction TodoApp() {\n  // Challenge: Add state for todos and input\n  // const [todos, setTodos] = useState([]);\n  // const [inputValue, setInputValue] = useState('');\n\n  // Challenge: Load todos from localStorage on mount\n  useEffect(() => {\n    // Load saved todos\n  }, []);\n\n  // Challenge: Save todos to localStorage when todos change\n  useEffect(() => {\n    // Save todos\n  }, [/* dependency array */]);\n\n  const addTodo = () => {\n    // Add new todo\n  };\n\n  const toggleTodo = (id) => {\n    // Toggle completed status\n  };\n\n  const deleteTodo = (id) => {\n    // Remove todo\n  };\n\n  return (\n    <div className=\"todo-app\">\n      <h1>My Todo App</h1>\n      \n      {/* Add Todo Form */}\n      <div className=\"add-todo\">\n        <input\n          type=\"text\"\n          value={/* input value */}\n          onChange={/* handle change */}\n          placeholder=\"Add a new todo...\"\n          onKeyPress={/* handle enter key */}\n        />\n        <button onClick={addTodo}>Add</button>\n      </div>\n\n      {/* Todo List */}\n      <ul className=\"todo-list\">\n        {/* Map over todos and render each one */}\n      </ul>\n    </div>\n  );\n}\n\nexport default TodoApp;",
+          "solution": "import React, { useState, useEffect } from 'react';\n\nfunction TodoApp() {\n  const [todos, setTodos] = useState([]);\n  const [inputValue, setInputValue] = useState('');\n\n  // Load todos from localStorage on component mount\n  useEffect(() => {\n    const savedTodos = localStorage.getItem('todos');\n    if (savedTodos) {\n      setTodos(JSON.parse(savedTodos));\n    }\n  }, []);\n\n  // Save todos to localStorage whenever todos change\n  useEffect(() => {\n    localStorage.setItem('todos', JSON.stringify(todos));\n  }, [todos]);\n\n  const addTodo = () => {\n    if (inputValue.trim()) {\n      const newTodo = {\n        id: Date.now(),\n        text: inputValue.trim(),\n        completed: false\n      };\n      setTodos([...todos, newTodo]);\n      setInputValue('');\n    }\n  };\n\n  const toggleTodo = (id) => {\n    setTodos(todos.map(todo =>\n      todo.id === id\n        ? { ...todo, completed: !todo.completed }\n        : todo\n    ));\n  };\n\n  const deleteTodo = (id) => {\n    setTodos(todos.filter(todo => todo.id !== id));\n  };\n\n  const handleKeyPress = (e) => {\n    if (e.key === 'Enter') {\n      addTodo();\n    }\n  };\n\n  return (\n    <div className=\"todo-app\">\n      <h1>My Todo App</h1>\n      \n      <div className=\"add-todo\">\n        <input\n          type=\"text\"\n          value={inputValue}\n          onChange={(e) => setInputValue(e.target.value)}\n          placeholder=\"Add a new todo...\"\n          onKeyPress={handleKeyPress}\n        />\n        <button onClick={addTodo}>Add</button>\n      </div>\n\n      <ul className=\"todo-list\">\n        {todos.map(todo => (\n          <li key={todo.id} className={todo.completed ? 'completed' : ''}>\n            <span\n              onClick={() => toggleTodo(todo.id)}\n              style={{\n                textDecoration: todo.completed ? 'line-through' : 'none',\n                cursor: 'pointer'\n              }}\n            >\n              {todo.text}\n            </span>\n            <button onClick={() => deleteTodo(todo.id)}>Delete</button>\n          </li>\n        ))}\n      </ul>\n\n      <div className=\"todo-stats\">\n        Total: {todos.length} | \n        Completed: {todos.filter(t => t.completed).length} |\n        Remaining: {todos.filter(t => !t.completed).length}\n      </div>\n    </div>\n  );\n}\n\nexport default TodoApp;"
+        },
+        "keyElements": [
+          {
+            "concept": "JSX",
+            "description": "JavaScript syntax extension that looks like HTML",
+            "example": "const element = <h1>Hello, {name}!</h1>;\nconst list = <ul>{items.map(item => <li key={item.id}>{item.name}</li>)}</ul>;",
+            "useCase": "Writing component templates that combine HTML and JavaScript"
+          },
+          {
+            "concept": "useState",
+            "description": "Hook for adding state to functional components",
+            "example": "const [count, setCount] = useState(0);\nconst [user, setUser] = useState({ name: '', email: '' });",
+            "useCase": "Managing component state like form inputs, toggles, counters"
+          },
+          {
+            "concept": "useEffect",
+            "description": "Hook for side effects like API calls, subscriptions, or DOM manipulation",
+            "example": "useEffect(() => {\n  document.title = `Count: ${count}`;\n}, [count]); // Only run when count changes",
+            "useCase": "Data fetching, setting up subscriptions, manually changing DOM"
+          },
+          {
+            "concept": "Props",
+            "description": "Properties passed from parent to child components",
+            "example": "function Welcome({ name, age }) {\n  return <h1>Hello {name}, age {age}!</h1>;\n}\n\n// Usage: <Welcome name=\"John\" age={25} />",
+            "useCase": "Passing data and functions between components"
+          },
+          {
+            "concept": "Event Handling",
+            "description": "Handling user interactions like clicks, form submissions",
+            "example": "const handleClick = (e) => {\n  e.preventDefault();\n  console.log('Clicked!');\n};\n\n<button onClick={handleClick}>Click me</button>",
+            "useCase": "Responding to user interactions and form events"
+          },
+          {
+            "concept": "Conditional Rendering",
+            "description": "Showing different UI based on conditions",
+            "example": "return (\n  <div>\n    {isLoggedIn ? <Dashboard /> : <LoginForm />}\n    {error && <ErrorMessage error={error} />}\n  </div>\n);",
+            "useCase": "Showing/hiding components based on state or props"
+          },
+          {
+            "concept": "Lists and Keys",
+            "description": "Rendering arrays of data with unique keys for performance",
+            "example": "const todoList = todos.map(todo => (\n  <li key={todo.id}>\n    {todo.text}\n  </li>\n));",
+            "useCase": "Displaying dynamic lists of data like todos, posts, products"
+          }
+        ]
+      },
       "resources": [
         {
           "type": "documentation",
