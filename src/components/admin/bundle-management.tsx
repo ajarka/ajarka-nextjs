@@ -454,7 +454,7 @@ export default function BundleManagement() {
         <CardContent>
           <div className="grid gap-4">
             {bundles.map((bundle) => (
-              <Card key={bundle.id} className="border-l-4 border-l-blue-500">
+              <Card key={bundle._id} className="border-l-4 border-l-blue-500">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="space-y-2">
@@ -503,7 +503,7 @@ export default function BundleManagement() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleDeleteBundle(bundle.id)}
+                          onClick={() => handleDeleteBundle(bundle._id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -659,7 +659,7 @@ export default function BundleManagement() {
         <CardContent>
           <div className="space-y-4">
             {discountRules.map((rule) => (
-              <Card key={rule.id} className="border-l-4 border-l-green-500">
+              <Card key={rule._id} className="border-l-4 border-l-green-500">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">

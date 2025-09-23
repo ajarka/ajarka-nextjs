@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useMutation } from 'convex/react'
+import { api } from "../../../convex/_generated/api"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,8 +23,6 @@ import {
   X
 } from "lucide-react"
 import { useRouter } from 'next/navigation'
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 const SKILL_OPTIONS = [
   'HTML', 'CSS', 'JavaScript', 'TypeScript', 'React', 'Vue.js', 'Angular',
@@ -58,6 +58,9 @@ export default function AddMentorForm() {
   const [loading, setLoading] = useState(false)
   const [newSkill, setNewSkill] = useState('')
   const [newSpecialization, setNewSpecialization] = useState('')
+
+  // Convex mutation for creating user
+  const createUser = useMutation(api.users.create)
   
   const [formData, setFormData] = useState<MentorFormData>({
     email: '',
@@ -150,7 +153,7 @@ export default function AddMentorForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!formData.email || !formData.password || !formData.name || !formData.phone) {
       alert('Please fill in all required fields')
       return
@@ -163,51 +166,59 @@ export default function AddMentorForm() {
 
     setLoading(true)
     try {
-      // Create user account
-      const newMentor = {
-        id: Date.now().toString(),
+      // Create user account using Convex
+      const userId = await createUser({
         email: formData.email,
-        password: formData.password, // In production, this should be hashed
-        role: 'mentor',
+        password: formData.password,
+        role: 'mentor' as const,
         name: formData.name,
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=2e7d32&color=fff`,
         phone: formData.phone,
         bio: formData.bio,
         skills: formData.skills,
-        experience: formData.experience,
-        education: formData.education,
-        portfolioUrl: formData.portfolioUrl,
-        linkedinUrl: formData.linkedinUrl,
-        githubUrl: formData.githubUrl,
-        hourlyRate: formData.hourlyRate,
         rating: 5.0,
         totalStudents: 0,
-        totalSessions: 0,
-        availability: formData.availability,
-        specializations: formData.specializations,
-        bankDetails: formData.bankDetails,
-        isActive: true,
-        isVerified: false,
+        experienceYears: parseInt(formData.experience) || 0,
+        specialization: formData.specializations,
         provider: 'email',
         emailVerified: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-
-      const response = await fetch(`${API_BASE_URL}/users`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newMentor)
+        socialMedia: {
+          linkedin: formData.linkedinUrl,
+          github: formData.githubUrl,
+          portfolio: formData.portfolioUrl,
+        }
       })
 
-      if (!response.ok) throw new Error('Failed to create mentor account')
-
       alert(`Mentor account created successfully!\n\nLogin credentials:\nEmail: ${formData.email}\nPassword: ${formData.password}\n\nPlease share these credentials with the mentor.`)
-      
-      router.push('/dashboard')
+
+      // Reset form
+      setFormData({
+        email: '',
+        password: '',
+        name: '',
+        phone: '',
+        bio: '',
+        skills: [],
+        experience: '',
+        education: '',
+        portfolioUrl: '',
+        linkedinUrl: '',
+        githubUrl: '',
+        hourlyRate: 50000,
+        availability: [],
+        specializations: [],
+        bankDetails: {
+          bankName: '',
+          accountNumber: '',
+          accountName: ''
+        }
+      })
+
+      router.push('/dashboard/admin')
     } catch (error) {
       console.error('Error creating mentor:', error)
-      alert('Failed to create mentor account. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create mentor account. Please try again.'
+      alert(errorMessage)
     } finally {
       setLoading(false)
     }

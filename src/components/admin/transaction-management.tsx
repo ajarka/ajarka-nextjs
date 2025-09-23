@@ -113,7 +113,7 @@ export default function TransactionManagement() {
 
     setProcessingPayout(true)
     try {
-      const success = await PaymentService.processMentorPayout(selectedPayout.id, {
+      const success = await PaymentService.processMentorPayout(selectedPayout._id, {
         bankName: payoutForm.bankName,
         accountNumber: payoutForm.accountNumber,
         accountName: payoutForm.accountName,

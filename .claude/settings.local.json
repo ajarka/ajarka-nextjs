@@ -16,7 +16,11 @@
       "Bash(grep:*)",
       "Bash(sed:*)",
       "Read(c:\\Users\\aditi\\OneDrive\\Gambar\\Screenshot/**)",
-      "Read(c:\\Users\\aditi\\OneDrive\\Gambar\\Screenshot/**)"
+      "Read(c:\\Users\\aditi\\OneDrive\\Gambar\\Screenshot/**)",
+      "WebFetch(domain:docs.convex.dev)",
+      "Bash(npx convex dev:*)",
+      "Bash(npx convex deploy:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

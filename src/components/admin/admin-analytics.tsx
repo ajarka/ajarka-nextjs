@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { AdminService } from '@/services/admin-service'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { 
@@ -25,7 +26,7 @@ interface PaymentStats {
 }
 
 interface MentorPerformance {
-  id: number
+  _id: string
   name: string
   totalSessions: number
   totalEarnings: number
@@ -44,51 +45,51 @@ interface StudentFeedback {
 
 export default function AdminAnalytics() {
   const [paymentStats, setPaymentStats] = useState<PaymentStats>({
-    totalRevenue: 45250000,
-    totalTransactions: 156,
-    averageTransactionValue: 290064,
-    monthlyGrowth: 23.5
+    totalRevenue: 0,
+    totalTransactions: 0,
+    averageTransactionValue: 0,
+    monthlyGrowth: 0
   })
 
-  const [mentorPerformance, setMentorPerformance] = useState<MentorPerformance[]>([
-    {
-      id: 2,
-      name: "John Doe",
-      totalSessions: 45,
-      totalEarnings: 9450000,
-      averageRating: 4.8,
-      completionRate: 96,
-      studentSatisfaction: 94,
-      responseTime: 2.5
-    },
-    {
-      id: 4,
-      name: "Sarah Wilson",
-      totalSessions: 38,
-      totalEarnings: 7980000,
-      averageRating: 4.9,
-      completionRate: 98,
-      studentSatisfaction: 97,
-      responseTime: 1.8
-    },
-    {
-      id: 5,
-      name: "Michael Chen",
-      totalSessions: 32,
-      totalEarnings: 6720000,
-      averageRating: 4.7,
-      completionRate: 94,
-      studentSatisfaction: 91,
-      responseTime: 3.2
-    }
-  ])
+  const [mentorPerformance, setMentorPerformance] = useState<MentorPerformance[]>([])
 
   const [studentFeedback, setStudentFeedback] = useState<StudentFeedback>({
-    totalStudents: 234,
-    activeStudents: 189,
-    averageSatisfaction: 4.6,
-    repeatBookingRate: 78
+    totalStudents: 0,
+    activeStudents: 0,
+    averageSatisfaction: 0,
+    repeatBookingRate: 0
   })
+
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchAnalyticsData = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+
+        // Fetch all analytics data in parallel
+        const [paymentData, mentorData, studentData] = await Promise.all([
+          AdminService.getPaymentAnalytics(),
+          AdminService.getMentorPerformanceAnalytics(),
+          AdminService.getStudentAnalytics()
+        ])
+
+        setPaymentStats(paymentData)
+        setMentorPerformance(mentorData)
+        setStudentFeedback(studentData)
+
+      } catch (error) {
+        console.error('Error fetching analytics data:', error)
+        setError('Failed to load analytics data. Please try again.')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchAnalyticsData()
+  }, [])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -103,6 +104,51 @@ export default function AdminAnalytics() {
     if (rating >= 4.5) return <Badge className="bg-blue-100 text-blue-800">Very Good</Badge>
     if (rating >= 4.0) return <Badge className="bg-yellow-100 text-yellow-800">Good</Badge>
     return <Badge className="bg-gray-100 text-gray-800">Needs Improvement</Badge>
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Analytics & Statistics</h1>
+          <p className="text-muted-foreground mt-2">
+            Monitor student payments, mentor performance, and platform metrics
+          </p>
+        </div>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading analytics data...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Analytics & Statistics</h1>
+          <p className="text-muted-foreground mt-2">
+            Monitor student payments, mentor performance, and platform metrics
+          </p>
+        </div>
+        <Card>
+          <CardContent className="flex items-center justify-center h-96">
+            <div className="text-center">
+              <p className="text-red-600 mb-4">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Retry
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -256,7 +302,7 @@ export default function AdminAnalytics() {
         <CardContent>
           <div className="space-y-4">
             {mentorPerformance.map((mentor, index) => (
-              <div key={mentor.id} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
+              <div key={mentor._id} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${

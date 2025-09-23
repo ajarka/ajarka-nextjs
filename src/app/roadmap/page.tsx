@@ -30,7 +30,7 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { learningService, type LearningJourney, type LearningMaterial, type StudentProgress } from '@/lib/learning-service'
+import { learningService, type LearningJourney, type LearningMaterial, type StudentProgress } from '@/lib/learning-service-simple'
 import { useSession } from 'next-auth/react'
 
 export default function RoadmapPage() {

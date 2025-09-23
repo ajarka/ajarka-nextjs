@@ -57,8 +57,8 @@ export default function SubscriptionTracking() {
     setLoading(true)
     try {
       const [subscriptionsData, usersData, bundlesData] = await Promise.all([
-        fetch('http://localhost:3001/student_subscriptions').then(r => r.json()) as Promise<StudentSubscription[]>,
-        fetch('http://localhost:3001/users').then(r => r.json()) as Promise<User[]>,
+        BundleService.getAllStudentSubscriptions(),
+        BundleService.getAllUsers(),
         BundleService.getAllBundlePackages()
       ])
       
@@ -81,14 +81,14 @@ export default function SubscriptionTracking() {
   }
 
   const getSubscriptionWithDetails = (subscription: StudentSubscription): SubscriptionWithUser => {
-    const student = users.find(u => u.id === subscription.studentId) || {
+    const student = users.find(u => u._id === subscription.studentId) || {
       id: subscription.studentId,
       name: 'Unknown Student',
       email: 'unknown@email.com',
       role: 'student'
     }
     
-    const bundle = bundles.find(b => b.id === subscription.bundleId) || {
+    const bundle = bundles.find(b => b._id === subscription.bundleId) || {
       id: subscription.bundleId,
       name: subscription.bundleName,
       description: 'Bundle no longer available',
@@ -337,7 +337,7 @@ export default function SubscriptionTracking() {
               <SelectContent>
                 <SelectItem value="all">All Bundles</SelectItem>
                 {bundles.map((bundle) => (
-                  <SelectItem key={bundle.id} value={bundle.id}>
+                  <SelectItem key={bundle._id} value={bundle._id}>
                     {bundle.name}
                   </SelectItem>
                 ))}
@@ -360,7 +360,7 @@ export default function SubscriptionTracking() {
                 const isExpiringSoon = subscription.status === 'active' && daysRemaining <= 7
                 
                 return (
-                  <Card key={subscription.id} className={`border-l-4 ${
+                  <Card key={subscription._id} className={`border-l-4 ${
                     subscription.status === 'active' ? 'border-l-green-500' :
                     subscription.status === 'expired' ? 'border-l-gray-500' :
                     subscription.status === 'cancelled' ? 'border-l-red-500' :
@@ -588,7 +588,7 @@ export default function SubscriptionTracking() {
                 {selectedSubscription?.status === 'active' && (
                   <Button
                     variant="outline"
-                    onClick={() => handleUpdateSubscriptionStatus(selectedSubscription.id, 'suspended')}
+                    onClick={() => handleUpdateSubscriptionStatus(selectedSubscription._id, 'suspended')}
                   >
                     Suspend
                   </Button>
@@ -596,7 +596,7 @@ export default function SubscriptionTracking() {
                 {selectedSubscription?.status === 'suspended' && (
                   <Button
                     variant="outline"
-                    onClick={() => handleUpdateSubscriptionStatus(selectedSubscription.id, 'active')}
+                    onClick={() => handleUpdateSubscriptionStatus(selectedSubscription._id, 'active')}
                   >
                     Reactivate
                   </Button>
@@ -604,7 +604,7 @@ export default function SubscriptionTracking() {
                 {selectedSubscription?.status !== 'cancelled' && (
                   <Button
                     variant="destructive"
-                    onClick={() => handleUpdateSubscriptionStatus(selectedSubscription.id, 'cancelled')}
+                    onClick={() => handleUpdateSubscriptionStatus(selectedSubscription._id, 'cancelled')}
                   >
                     Cancel
                   </Button>

@@ -4,6 +4,8 @@ import "./globals.css";
 import { AuthProvider } from "@/components/providers/session-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { ConvexClientProvider } from "@/providers/convex-provider";
+import { Toaster } from "react-hot-toast";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 
@@ -29,19 +31,22 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <QueryProvider>
-              <div className="min-h-screen flex flex-col">
-                <Navbar />
-                <main className="flex-1">
-                  <div className="max-w-7xl mx-auto">
-                    {children}
-                  </div>
-                </main>
-                <Footer />
-              </div>
-            </QueryProvider>
-          </AuthProvider>
+          <ConvexClientProvider>
+            <AuthProvider>
+              <QueryProvider>
+                <div className="min-h-screen flex flex-col">
+                  <Navbar />
+                  <main className="flex-1">
+                    <div className="max-w-7xl mx-auto">
+                      {children}
+                    </div>
+                  </main>
+                  <Footer />
+                </div>
+              </QueryProvider>
+            </AuthProvider>
+            <Toaster position="top-right" />
+          </ConvexClientProvider>
         </ThemeProvider>
       </body>
     </html>
