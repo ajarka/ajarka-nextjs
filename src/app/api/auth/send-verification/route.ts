@@ -1,18 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
-import nodemailer from 'nodemailer'
 import crypto from 'crypto'
 import axios from 'axios'
+
+// Force Node.js runtime for nodemailer compatibility
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 // Email configuration (using Gmail for development)
-const transporter = nodemailer.createTransporter({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD // Use App Password, not regular password
+// Lazy load nodemailer only when needed
+let transporter: any = null
+async function getTransporter() {
+  if (!transporter) {
+    const nodemailer = await import('nodemailer')
+    transporter = nodemailer.default.createTransporter({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD // Use App Password, not regular password
+      }
+    })
   }
-})
+  return transporter
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -99,7 +110,8 @@ export async function POST(request: NextRequest) {
       `
     }
 
-    await transporter.sendMail(mailOptions)
+    const mailer = await getTransporter()
+    await mailer.sendMail(mailOptions)
 
     return NextResponse.json({
       message: 'Verification email sent successfully',
