@@ -46,6 +46,13 @@ const quickActions = [
     color: 'bg-indigo-600'
   },
   {
+    title: 'Kelola Users',
+    description: 'Lihat dan kelola semua mentor & siswa',
+    href: '/dashboard/users',
+    icon: Users,
+    color: 'bg-gray-600'
+  },
+  {
     title: 'Statistik & Analytics',
     description: 'Lihat performa mentor dan pembayaran siswa',
     href: '/dashboard/analytics',
@@ -56,6 +63,13 @@ const quickActions = [
     title: 'Tambah Mentor',
     description: 'Tambahkan mentor baru ke platform',
     href: '/dashboard/tambah-mentor',
+    icon: Plus,
+    color: 'bg-green-600'
+  },
+  {
+    title: 'Tambah Siswa',
+    description: 'Tambahkan siswa baru atau import bulk',
+    href: '/dashboard/tambah-siswa',
     icon: Plus,
     color: 'bg-blue-600'
   },

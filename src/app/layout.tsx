@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ConvexClientProvider } from "@/providers/convex-provider";
 import { Toaster } from "react-hot-toast";
+import { Toaster as SonnerToaster } from "sonner";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 
@@ -46,6 +47,7 @@ export default function RootLayout({
               </QueryProvider>
             </AuthProvider>
             <Toaster position="top-right" />
+            <SonnerToaster position="top-right" richColors />
           </ConvexClientProvider>
         </ThemeProvider>
       </body>

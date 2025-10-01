@@ -130,6 +130,16 @@ export const update = mutation({
     totalStudents: v.optional(v.number()),
     level: v.optional(v.string()),
     interests: v.optional(v.array(v.string())),
+    studyGoals: v.optional(v.array(v.string())),
+    location: v.optional(v.string()),
+    company: v.optional(v.string()),
+    experienceYears: v.optional(v.number()),
+    socialMedia: v.optional(v.object({
+      linkedin: v.optional(v.string()),
+      github: v.optional(v.string()),
+      portfolio: v.optional(v.string()),
+    })),
+    password: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...updateData } = args;

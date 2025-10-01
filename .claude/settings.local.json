@@ -20,7 +20,12 @@
       "WebFetch(domain:docs.convex.dev)",
       "Bash(npx convex dev:*)",
       "Bash(npx convex deploy:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(cat:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout 30 npm run build:*)",
+      "Bash(npx shadcn:*)",
+      "Bash(npx shadcn@latest add:*)"
     ],
     "deny": [],
     "ask": []

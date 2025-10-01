@@ -219,22 +219,6 @@ export default function LoginPage() {
                 </Link>
               </div>
             </div>
-
-            {/* Demo Accounts */}
-            <div className="mt-8 p-4 bg-muted/50 rounded-lg">
-              <h4 className="text-sm font-medium mb-3">Demo Accounts:</h4>
-              <div className="space-y-2 text-xs">
-                <div>
-                  <strong>Admin:</strong> admin@ajarka.com | password
-                </div>
-                <div>
-                  <strong>Mentor:</strong> mentor@ajarka.com | password
-                </div>
-                <div>
-                  <strong>Siswa:</strong> siswa@ajarka.com | password
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </motion.div>

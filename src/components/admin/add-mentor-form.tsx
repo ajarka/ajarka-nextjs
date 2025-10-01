@@ -23,6 +23,8 @@ import {
   X
 } from "lucide-react"
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import bcrypt from 'bcryptjs'
 
 const SKILL_OPTIONS = [
   'HTML', 'CSS', 'JavaScript', 'TypeScript', 'React', 'Vue.js', 'Angular',
@@ -155,21 +157,26 @@ export default function AddMentorForm() {
     e.preventDefault()
 
     if (!formData.email || !formData.password || !formData.name || !formData.phone) {
-      alert('Please fill in all required fields')
+      toast.error('Please fill in all required fields')
       return
     }
 
     if (formData.skills.length === 0) {
-      alert('Please add at least one skill')
+      toast.error('Please add at least one skill')
       return
     }
 
     setLoading(true)
+    const loadingToast = toast.loading('Creating mentor account...')
+
     try {
+      // Hash password before saving
+      const hashedPassword = await bcrypt.hash(formData.password, 10)
+
       // Create user account using Convex
-      const userId = await createUser({
+      await createUser({
         email: formData.email,
-        password: formData.password,
+        password: hashedPassword,
         role: 'mentor' as const,
         name: formData.name,
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=2e7d32&color=fff`,
@@ -189,7 +196,20 @@ export default function AddMentorForm() {
         }
       })
 
-      alert(`Mentor account created successfully!\n\nLogin credentials:\nEmail: ${formData.email}\nPassword: ${formData.password}\n\nPlease share these credentials with the mentor.`)
+      toast.dismiss(loadingToast)
+
+      // Show success toast with credentials
+      toast.success(
+        <div className="space-y-2">
+          <p className="font-semibold">Mentor account created successfully!</p>
+          <div className="text-sm space-y-1">
+            <p><strong>Email:</strong> {formData.email}</p>
+            <p><strong>Password:</strong> {formData.password}</p>
+          </div>
+          <p className="text-xs text-muted-foreground">Please share these credentials with the mentor</p>
+        </div>,
+        { duration: 10000 }
+      )
 
       // Reset form
       setFormData({
@@ -214,11 +234,14 @@ export default function AddMentorForm() {
         }
       })
 
-      router.push('/dashboard/admin')
+      setTimeout(() => {
+        router.push('/dashboard/users')
+      }, 2000)
     } catch (error) {
+      toast.dismiss(loadingToast)
       console.error('Error creating mentor:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to create mentor account. Please try again.'
-      alert(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
