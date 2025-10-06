@@ -16,7 +16,7 @@ import {
   Globe,
   AlertTriangle
 } from "lucide-react"
-import PricingManagement from './pricing-management-fixed'
+import PricingManagement from './pricing-management'
 import LocationManagement from './location-management'
 import EventManagement from './event-management'
 import BundleManagement from './bundle-management'

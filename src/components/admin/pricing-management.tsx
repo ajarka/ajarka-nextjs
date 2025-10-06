@@ -1,15 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { 
+import {
   DollarSign,
   Plus,
   Edit,
@@ -17,70 +16,54 @@ import {
   Calculator,
   Settings,
   AlertTriangle,
-  CheckCircle,
-  TrendingUp,
-  Globe,
-  Monitor
+  TrendingUp
 } from "lucide-react"
-import { AdminService, AdminPricingRule } from '@/lib/admin-service'
-
-const MATERIAL_OPTIONS = [
-  'Frontend Development',
-  'Backend Development', 
-  'Full Stack Development',
-  'Data Science',
-  'Machine Learning',
-  'DevOps',
-  'UI/UX Design',
-  'Mobile Development',
-  'Cybersecurity',
-  'Cloud Computing'
-]
-
-const DURATION_OPTIONS = [30, 60, 90, 120, 180]
+import { AdminService } from '@/services/admin-service'
+import type { AdminPricingRule } from '@/services/admin-service'
+import { Id } from '../../convex/_generated/dataModel'
 
 export default function PricingManagement() {
-  const [pricingRules, setPricingRules] = useState<AdminPricingRule[]>([])
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  // Use Convex hooks - static methods
+  const pricingRules = AdminService.usePricingRules() || []
+  const createPricingRule = AdminService.useCreatePricingRule()
+  const updatePricingRule = AdminService.useUpdatePricingRule()
+  const deletePricingRule = AdminService.useDeletePricingRule()
+
   const [showDialog, setShowDialog] = useState(false)
   const [editingRule, setEditingRule] = useState<AdminPricingRule | null>(null)
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<Id<"adminPricingRules"> | null>(null)
 
   const [formData, setFormData] = useState({
-    name: '',
-    materials: [] as string[],
-    meetingType: 'online' as 'online' | 'offline',
-    minDuration: 60,
-    maxDuration: 120,
-    sessionType: 'mentoring' as 'mentoring' | 'event',
-    studentPrice: 150000,
-    mentorFeePercentage: 70,
-    adminFeePercentage: 30,
-    isActive: true
+    ruleName: '',
+    category: 'session_pricing' as 'session_pricing' | 'bundle_discount' | 'mentor_commission' | 'platform_fee',
+    basePrice: 150000,
+    mentorShare: 70,
+    platformFee: 30,
+    discountTiers: [] as Array<{ sessionCount: number; discountPercentage: number }>,
+    specialRates: {
+      newStudentDiscount: 0,
+      loyaltyDiscount: 0,
+      referralDiscount: 0,
+    },
+    isActive: true,
+    effectiveDate: new Date().toISOString().split('T')[0],
   })
-
-  const fetchPricingRules = async () => {
-    setLoading(true)
-    const rules = await AdminService.getPricingRules()
-    setPricingRules(rules)
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    fetchPricingRules()
-  }, [])
 
   const resetForm = () => {
     setFormData({
-      material: '',
-      meetingType: 'online',
-      duration: 60,
-      sessionType: 'mentoring',
-      studentPrice: 150000,
-      mentorFeePercentage: 70,
-      adminFeePercentage: 30,
-      isActive: true
+      ruleName: '',
+      category: 'session_pricing',
+      basePrice: 150000,
+      mentorShare: 70,
+      platformFee: 30,
+      discountTiers: [],
+      specialRates: {
+        newStudentDiscount: 0,
+        loyaltyDiscount: 0,
+        referralDiscount: 0,
+      },
+      isActive: true,
+      effectiveDate: new Date().toISOString().split('T')[0],
     })
     setEditingRule(null)
   }
@@ -89,14 +72,19 @@ export default function PricingManagement() {
     if (rule) {
       setEditingRule(rule)
       setFormData({
-        material: rule.material,
-        meetingType: rule.meetingType,
-        duration: rule.duration,
-        sessionType: rule.sessionType,
-        studentPrice: rule.studentPrice,
-        mentorFeePercentage: rule.mentorFeePercentage,
-        adminFeePercentage: rule.adminFeePercentage,
-        isActive: rule.isActive
+        ruleName: rule.ruleName,
+        category: rule.category,
+        basePrice: rule.basePrice,
+        mentorShare: rule.mentorShare,
+        platformFee: rule.platformFee,
+        discountTiers: rule.discountTiers || [],
+        specialRates: rule.specialRates || {
+          newStudentDiscount: 0,
+          loyaltyDiscount: 0,
+          referralDiscount: 0,
+        },
+        isActive: rule.isActive,
+        effectiveDate: rule.effectiveDate,
       })
     } else {
       resetForm()
@@ -105,40 +93,31 @@ export default function PricingManagement() {
   }
 
   const handleSave = async () => {
-    setSaving(true)
     try {
       if (editingRule) {
-        await AdminService.updatePricingRule(editingRule.id, formData)
+        await updatePricingRule({
+          id: editingRule._id,
+          ...formData,
+        })
       } else {
-        await AdminService.createPricingRule(formData)
+        await createPricingRule(formData)
       }
-      await fetchPricingRules()
       setShowDialog(false)
       resetForm()
     } catch (error) {
       console.error('Error saving pricing rule:', error)
-    } finally {
-      setSaving(false)
+      alert('Failed to save pricing rule. Please try again.')
     }
   }
 
-  const handleDelete = async (id: string) => {
-    setSaving(true)
+  const handleDelete = async (id: Id<"adminPricingRules">) => {
     try {
-      await AdminService.deletePricingRule(id)
-      await fetchPricingRules()
+      await deletePricingRule({ id })
       setDeleteConfirm(null)
     } catch (error) {
       console.error('Error deleting pricing rule:', error)
-    } finally {
-      setSaving(false)
+      alert('Failed to delete pricing rule. Please try again.')
     }
-  }
-
-  const calculateFees = (price: number, mentorPercent: number, adminPercent: number) => {
-    const mentorFee = AdminService.calculateMentorFee(price, mentorPercent)
-    const adminFee = AdminService.calculateAdminFee(price, adminPercent)
-    return { mentorFee, adminFee }
   }
 
   const formatCurrency = (amount: number) => {
@@ -149,7 +128,7 @@ export default function PricingManagement() {
     }).format(amount)
   }
 
-  if (loading) {
+  if (pricingRules === undefined) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center p-8">
@@ -166,12 +145,12 @@ export default function PricingManagement() {
         <div>
           <h2 className="text-2xl font-bold">Pricing Management</h2>
           <p className="text-muted-foreground">
-            Kelola aturan harga berdasarkan materi, durasi, dan tipe sesi
+            Kelola aturan harga untuk platform
           </p>
         </div>
         <Button onClick={() => openDialog()} className="gap-2">
           <Plus className="h-4 w-4" />
-          Add Pricing Rule
+          Add New Pricing Rule
         </Button>
       </div>
 
@@ -192,13 +171,13 @@ export default function PricingManagement() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Student Price</CardTitle>
+            <CardTitle className="text-sm font-medium">Avg Base Price</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {formatCurrency(
-                pricingRules.reduce((sum, rule) => sum + rule.studentPrice, 0) / 
+                pricingRules.reduce((sum, rule) => sum + rule.basePrice, 0) /
                 Math.max(pricingRules.length, 1)
               )}
             </div>
@@ -210,34 +189,33 @@ export default function PricingManagement() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Mentor Fee</CardTitle>
+            <CardTitle className="text-sm font-medium">Avg Mentor Share</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {Math.round(
-                pricingRules.reduce((sum, rule) => sum + rule.mentorFeePercentage, 0) / 
+                pricingRules.reduce((sum, rule) => sum + rule.mentorShare, 0) /
                 Math.max(pricingRules.length, 1)
               )}%
             </div>
             <p className="text-xs text-muted-foreground">
-              of student payment
+              of base price
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Online vs Offline</CardTitle>
-            <Globe className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Categories</CardTitle>
+            <Calculator className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {pricingRules.filter(r => r.meetingType === 'online').length}/
-              {pricingRules.filter(r => r.meetingType === 'offline').length}
+              {new Set(pricingRules.map(r => r.category)).size}
             </div>
             <p className="text-xs text-muted-foreground">
-              online/offline rules
+              unique categories
             </p>
           </CardContent>
         </Card>
@@ -248,7 +226,7 @@ export default function PricingManagement() {
         <CardHeader>
           <CardTitle>Pricing Rules</CardTitle>
           <CardDescription>
-            Aturan harga yang menentukan biaya student dan fee mentor
+            Aturan harga yang menentukan biaya dan distribusi pembayaran
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -258,7 +236,7 @@ export default function PricingManagement() {
                 <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No Pricing Rules</h3>
                 <p className="text-muted-foreground mb-4">
-                  Create your first pricing rule to start managing mentoring costs
+                  Create your first pricing rule to start managing platform costs
                 </p>
                 <Button onClick={() => openDialog()}>
                   <Plus className="h-4 w-4 mr-2" />
@@ -268,55 +246,47 @@ export default function PricingManagement() {
             ) : (
               <div className="grid gap-4">
                 {pricingRules.map((rule) => {
-                  const { mentorFee, adminFee } = calculateFees(
-                    rule.studentPrice, 
-                    rule.mentorFeePercentage, 
-                    rule.adminFeePercentage
-                  )
+                  const mentorAmount = Math.round((rule.basePrice * rule.mentorShare) / 100)
+                  const platformAmount = Math.round((rule.basePrice * rule.platformFee) / 100)
 
                   return (
-                    <Card key={rule.id} className="relative">
+                    <Card key={rule._id} className="relative">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <h4 className="font-semibold">{rule.material}</h4>
-                              <Badge variant={rule.meetingType === 'online' ? 'default' : 'secondary'}>
-                                {rule.meetingType === 'online' ? (
-                                  <><Monitor className="h-3 w-3 mr-1" />Online</>
-                                ) : (
-                                  <><Globe className="h-3 w-3 mr-1" />Offline</>
-                                )}
-                              </Badge>
-                              <Badge variant={rule.sessionType === 'mentoring' ? 'outline' : 'destructive'}>
-                                {rule.sessionType}
+                              <h4 className="font-semibold">{rule.ruleName}</h4>
+                              <Badge variant="outline">
+                                {rule.category.replace('_', ' ')}
                               </Badge>
                               <Badge variant={rule.isActive ? 'default' : 'secondary'}>
                                 {rule.isActive ? 'Active' : 'Inactive'}
                               </Badge>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                               <div>
-                                <span className="text-muted-foreground">Duration:</span>
-                                <p className="font-medium">{rule.duration} minutes</p>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Student Price:</span>
+                                <span className="text-muted-foreground">Base Price:</span>
                                 <p className="font-medium text-green-600">
-                                  {formatCurrency(rule.studentPrice)}
+                                  {formatCurrency(rule.basePrice)}
                                 </p>
                               </div>
                               <div>
-                                <span className="text-muted-foreground">Mentor Fee:</span>
+                                <span className="text-muted-foreground">Mentor Share:</span>
                                 <p className="font-medium text-blue-600">
-                                  {formatCurrency(mentorFee)} ({rule.mentorFeePercentage}%)
+                                  {formatCurrency(mentorAmount)} ({rule.mentorShare}%)
                                 </p>
                               </div>
                               <div>
-                                <span className="text-muted-foreground">Admin Fee:</span>
+                                <span className="text-muted-foreground">Platform Fee:</span>
                                 <p className="font-medium text-purple-600">
-                                  {formatCurrency(adminFee)} ({rule.adminFeePercentage}%)
+                                  {formatCurrency(platformAmount)} ({rule.platformFee}%)
+                                </p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Effective Date:</span>
+                                <p className="font-medium">
+                                  {new Date(rule.effectiveDate).toLocaleDateString('id-ID')}
                                 </p>
                               </div>
                             </div>
@@ -333,7 +303,7 @@ export default function PricingManagement() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => setDeleteConfirm(rule.id)}
+                              onClick={() => setDeleteConfirm(rule._id)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -357,115 +327,91 @@ export default function PricingManagement() {
               {editingRule ? 'Edit Pricing Rule' : 'Add New Pricing Rule'}
             </DialogTitle>
             <DialogDescription>
-              Set pricing based on material, type, and duration
+              Set pricing and commission rules for the platform
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Material</Label>
-                <Select value={formData.material} onValueChange={(value) => setFormData({...formData, material: value})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select material" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MATERIAL_OPTIONS.map((material) => (
-                      <SelectItem key={material} value={material}>
-                        {material}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Session Type</Label>
-                <Select value={formData.sessionType} onValueChange={(value: 'mentoring' | 'event') => setFormData({...formData, sessionType: value})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="mentoring">Regular Mentoring</SelectItem>
-                    <SelectItem value="event">Special Event</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <Label>Rule Name</Label>
+              <Input
+                value={formData.ruleName}
+                onChange={(e) => setFormData({...formData, ruleName: e.target.value})}
+                placeholder="e.g., Standard Mentoring Rate"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Meeting Type</Label>
-                <Select value={formData.meetingType} onValueChange={(value: 'online' | 'offline') => setFormData({...formData, meetingType: value})}>
+                <Label>Category</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value: typeof formData.category) => setFormData({...formData, category: value})}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="online">Online</SelectItem>
-                    <SelectItem value="offline">Offline</SelectItem>
+                    <SelectItem value="session_pricing">Session Pricing</SelectItem>
+                    <SelectItem value="bundle_discount">Bundle Discount</SelectItem>
+                    <SelectItem value="mentor_commission">Mentor Commission</SelectItem>
+                    <SelectItem value="platform_fee">Platform Fee</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label>Duration (minutes)</Label>
-                <Select value={formData.minDuration?.toString() || '60'} onValueChange={(value) => setFormData({...formData, minDuration: parseInt(value)})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DURATION_OPTIONS.map((duration) => (
-                      <SelectItem key={duration} value={duration.toString()}>
-                        {duration} minutes
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Effective Date</Label>
+                <Input
+                  type="date"
+                  value={formData.effectiveDate}
+                  onChange={(e) => setFormData({...formData, effectiveDate: e.target.value})}
+                />
               </div>
             </div>
 
             <div>
-              <Label>Student Price (IDR)</Label>
+              <Label>Base Price (IDR)</Label>
               <Input
                 type="number"
-                value={formData.studentPrice}
-                onChange={(e) => setFormData({...formData, studentPrice: parseInt(e.target.value)})}
+                value={formData.basePrice}
+                onChange={(e) => setFormData({...formData, basePrice: parseInt(e.target.value) || 0})}
                 placeholder="150000"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Mentor Fee Percentage</Label>
+                <Label>Mentor Share (%)</Label>
                 <Input
                   type="number"
                   min="0"
                   max="100"
-                  value={formData.mentorFeePercentage}
+                  value={formData.mentorShare}
                   onChange={(e) => {
-                    const mentorPercent = parseInt(e.target.value)
+                    const mentorShare = parseInt(e.target.value) || 0
                     setFormData({
-                      ...formData, 
-                      mentorFeePercentage: mentorPercent,
-                      adminFeePercentage: 100 - mentorPercent
+                      ...formData,
+                      mentorShare,
+                      platformFee: 100 - mentorShare
                     })
                   }}
                 />
               </div>
 
               <div>
-                <Label>Admin Fee Percentage</Label>
+                <Label>Platform Fee (%)</Label>
                 <Input
                   type="number"
                   min="0"
                   max="100"
-                  value={formData.adminFeePercentage}
+                  value={formData.platformFee}
                   onChange={(e) => {
-                    const adminPercent = parseInt(e.target.value)
+                    const platformFee = parseInt(e.target.value) || 0
                     setFormData({
-                      ...formData, 
-                      adminFeePercentage: adminPercent,
-                      mentorFeePercentage: 100 - adminPercent
+                      ...formData,
+                      platformFee,
+                      mentorShare: 100 - platformFee
                     })
                   }}
                 />
@@ -480,21 +426,21 @@ export default function PricingManagement() {
               </div>
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
-                  <span className="text-blue-600">Student pays:</span>
+                  <span className="text-blue-600">Base Price:</span>
                   <p className="font-bold text-green-600">
-                    {formatCurrency(formData.studentPrice)}
+                    {formatCurrency(formData.basePrice)}
                   </p>
                 </div>
                 <div>
-                  <span className="text-blue-600">Mentor gets:</span>
+                  <span className="text-blue-600">Mentor Gets:</span>
                   <p className="font-bold text-blue-600">
-                    {formatCurrency(AdminService.calculateMentorFee(formData.studentPrice, formData.mentorFeePercentage))}
+                    {formatCurrency(Math.round((formData.basePrice * formData.mentorShare) / 100))}
                   </p>
                 </div>
                 <div>
-                  <span className="text-blue-600">Admin gets:</span>
+                  <span className="text-blue-600">Platform Gets:</span>
                   <p className="font-bold text-purple-600">
-                    {formatCurrency(AdminService.calculateAdminFee(formData.studentPrice, formData.adminFeePercentage))}
+                    {formatCurrency(Math.round((formData.basePrice * formData.platformFee) / 100))}
                   </p>
                 </div>
               </div>
@@ -512,11 +458,11 @@ export default function PricingManagement() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>
+            <Button variant="outline" onClick={() => { setShowDialog(false); resetForm(); }}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? 'Saving...' : editingRule ? 'Update Rule' : 'Create Rule'}
+            <Button onClick={handleSave}>
+              {editingRule ? 'Update Rule' : 'Create Rule'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -538,12 +484,11 @@ export default function PricingManagement() {
             <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
               Cancel
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
-              disabled={saving}
             >
-              {saving ? 'Deleting...' : 'Delete Rule'}
+              Delete Rule
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -133,37 +133,41 @@ class AdminService extends BaseService {
       return []
     }
   }
-  // Pricing Rules
-  usePricingRules() {
-    return this.provider.useQuery(api.adminPricingRules.getAll, {});
+  // Pricing Rules - Static methods for hook usage
+  static usePricingRules() {
+    return this.useQuery<AdminPricingRule[]>('adminPricingRules.getAll', {});
   }
 
-  useActivePricingRules() {
-    return this.provider.useQuery(api.adminPricingRules.getActiveRules, {});
+  static useActivePricingRules() {
+    return this.useQuery<AdminPricingRule[]>('adminPricingRules.getActiveRules', {});
   }
 
-  usePricingRulesByCategory(category: AdminPricingRule['category']) {
-    return this.provider.useQuery(api.adminPricingRules.getByCategory, { category });
+  static usePricingRulesByCategory(category: AdminPricingRule['category']) {
+    return this.useQuery<AdminPricingRule[]>('adminPricingRules.getByCategory', { category });
   }
 
-  useCurrentPricing() {
-    return this.provider.useQuery(api.adminPricingRules.getCurrentPricing, {});
+  static useCurrentPricing() {
+    return this.useQuery<Record<string, AdminPricingRule>>('adminPricingRules.getCurrentPricing', {});
   }
 
-  async createPricingRule(data: Omit<AdminPricingRule, '_id' | 'createdAt' | 'updatedAt'>) {
-    return await this.provider.useMutation(api.adminPricingRules.create, data);
+  static useCreatePricingRule() {
+    return this.useMutation<Id<"adminPricingRules">>('adminPricingRules.create');
   }
 
-  async updatePricingRule(id: Id<"adminPricingRules">, updates: Partial<AdminPricingRule>) {
-    return await this.provider.useMutation(api.adminPricingRules.update, { id, ...updates });
+  static useUpdatePricingRule() {
+    return this.useMutation<Id<"adminPricingRules">>('adminPricingRules.update');
   }
 
-  async deletePricingRule(id: Id<"adminPricingRules">) {
-    return await this.provider.useMutation(api.adminPricingRules.remove, { id });
+  static useDeletePricingRule() {
+    return this.useMutation<void>('adminPricingRules.remove');
   }
 
-  async calculateSessionPrice(sessionCount: number, isNewStudent?: boolean, isLoyalCustomer?: boolean, isReferral?: boolean) {
-    return await this.provider.useQuery(api.adminPricingRules.calculateSessionPrice, {
+  static useTogglePricingRuleActive() {
+    return this.useMutation<Id<"adminPricingRules">>('adminPricingRules.toggleActive');
+  }
+
+  static useCalculateSessionPrice(sessionCount: number, isNewStudent?: boolean, isLoyalCustomer?: boolean, isReferral?: boolean) {
+    return this.useQuery<any>('adminPricingRules.calculateSessionPrice', {
       sessionCount,
       isNewStudent,
       isLoyalCustomer,
@@ -171,47 +175,47 @@ class AdminService extends BaseService {
     });
   }
 
-  // Office Locations
-  useOfficeLocations() {
-    return this.provider.useQuery(api.adminOfficeLocations.getAll, {});
+  // Office Locations - Static methods
+  static useOfficeLocations() {
+    return this.useQuery<OfficeLocation[]>('adminOfficeLocations.getAll', {});
   }
 
-  useActiveOfficeLocations() {
-    return this.provider.useQuery(api.adminOfficeLocations.getActiveLocations, {});
+  static useActiveOfficeLocations() {
+    return this.useQuery<OfficeLocation[]>('adminOfficeLocations.getActiveLocations', {});
   }
 
-  useOfficeLocationsByCity(city: string) {
-    return this.provider.useQuery(api.adminOfficeLocations.getByCity, { city });
+  static useOfficeLocationsByCity(city: string) {
+    return this.useQuery<OfficeLocation[]>('adminOfficeLocations.getByCity', { city });
   }
 
-  useNearbyOfficeLocations(latitude: number, longitude: number, radiusKm?: number) {
-    return this.provider.useQuery(api.adminOfficeLocations.getNearbyLocations, {
+  static useNearbyOfficeLocations(latitude: number, longitude: number, radiusKm?: number) {
+    return this.useQuery<OfficeLocation[]>('adminOfficeLocations.getNearbyLocations', {
       latitude,
       longitude,
       radiusKm
     });
   }
 
-  async createOfficeLocation(data: Omit<OfficeLocation, '_id' | 'createdAt' | 'updatedAt'>) {
-    return await this.provider.useMutation(api.adminOfficeLocations.create, data);
+  static useCreateOfficeLocation() {
+    return this.useMutation<Id<"adminOfficeLocations">>('adminOfficeLocations.create');
   }
 
-  async updateOfficeLocation(id: Id<"adminOfficeLocations">, updates: Partial<OfficeLocation>) {
-    return await this.provider.useMutation(api.adminOfficeLocations.update, { id, ...updates });
+  static useUpdateOfficeLocation() {
+    return this.useMutation<Id<"adminOfficeLocations">>('adminOfficeLocations.update');
   }
 
-  async deleteOfficeLocation(id: Id<"adminOfficeLocations">) {
-    return await this.provider.useMutation(api.adminOfficeLocations.remove, { id });
+  static useDeleteOfficeLocation() {
+    return this.useMutation<void>('adminOfficeLocations.remove');
   }
 
-  async checkLocationAvailability(
+  static useCheckLocationAvailability(
     locationId: Id<"adminOfficeLocations">,
     date: string,
     startTime: string,
     endTime: string,
     requiredCapacity: number
   ) {
-    return await this.provider.useQuery(api.adminOfficeLocations.checkAvailability, {
+    return this.useQuery<any>('adminOfficeLocations.checkAvailability', {
       locationId,
       date,
       startTime,
@@ -220,55 +224,61 @@ class AdminService extends BaseService {
     });
   }
 
-  // Discount Rules
-  useDiscountRules() {
-    return this.provider.useQuery(api.discountRules.getAll, {});
+  // Discount Rules - Static methods
+  static useDiscountRules() {
+    return this.useQuery<DiscountRule[]>('discountRules.getAll', {});
   }
 
-  useActiveDiscountRules() {
-    return this.provider.useQuery(api.discountRules.getActiveRules, {});
+  static useActiveDiscountRules() {
+    return this.useQuery<DiscountRule[]>('discountRules.getActiveRules', {});
   }
 
-  useDiscountRulesByType(type: DiscountRule['type']) {
-    return this.provider.useQuery(api.discountRules.getByType, { type });
+  static useDiscountRulesByType(type: DiscountRule['type']) {
+    return this.useQuery<DiscountRule[]>('discountRules.getByType', { type });
   }
 
-  useApplicableDiscountRules(sessionCount: number, amount?: number, userRole?: string) {
-    return this.provider.useQuery(api.discountRules.getApplicableRules, {
+  static useApplicableDiscountRules(sessionCount: number, amount?: number, userRole?: string) {
+    return this.useQuery<DiscountRule[]>('discountRules.getApplicableRules', {
       sessionCount,
       amount,
       userRole
     });
   }
 
-  async createDiscountRule(data: Omit<DiscountRule, '_id' | 'createdAt' | 'updatedAt'>) {
-    return await this.provider.useMutation(api.discountRules.create, data);
+  static useCreateDiscountRule() {
+    return this.useMutation<Id<"discountRules">>('discountRules.create');
   }
 
-  async updateDiscountRule(id: Id<"discountRules">, updates: Partial<DiscountRule>) {
-    return await this.provider.useMutation(api.discountRules.update, { id, ...updates });
+  static useUpdateDiscountRule() {
+    return this.useMutation<Id<"discountRules">>('discountRules.update');
   }
 
-  async deleteDiscountRule(id: Id<"discountRules">) {
-    return await this.provider.useMutation(api.discountRules.remove, { id });
+  static useDeleteDiscountRule() {
+    return this.useMutation<void>('discountRules.remove');
   }
 
-  async calculateDiscount(ruleId: Id<"discountRules">, originalAmount: number, sessionCount: number) {
-    return await this.provider.useQuery(api.discountRules.calculateDiscount, {
+  static useToggleDiscountRuleActive() {
+    return this.useMutation<Id<"discountRules">>('discountRules.toggleActive');
+  }
+
+  static useCalculateDiscount(ruleId: Id<"discountRules">, originalAmount: number, sessionCount: number) {
+    return this.useQuery<any>('discountRules.calculateDiscount', {
       ruleId,
       originalAmount,
       sessionCount
     });
   }
 
-  // Admin Analytics
-  async getSystemStats() {
-    const [users, courses, bundles, transactions] = await Promise.all([
-      this.provider.useQuery(api.users.getAll, {}),
-      this.provider.useQuery(api.courses.getAll, {}),
-      this.provider.useQuery(api.bundlePackages.getAll, {}),
-      this.provider.useQuery(api.paymentTransactions.getAll, {})
-    ]);
+  // Admin Analytics - Static methods
+  static useSystemStats() {
+    const users = this.useQuery<any[]>('users.getAll', {});
+    const courses = this.useQuery<any[]>('courses.getAll', {});
+    const bundles = this.useQuery<any[]>('bundlePackages.getAll', {});
+    const transactions = this.useQuery<any[]>('paymentTransactions.getAll', {});
+
+    if (!users || !courses || !bundles || !transactions) {
+      return null;
+    }
 
     const totalUsers = users?.length || 0;
     const totalMentors = users?.filter(u => u.role === 'mentor').length || 0;
@@ -312,7 +322,7 @@ class AdminService extends BaseService {
   }> {
     try {
       // Get all payment transactions
-      const transactions = await this.query("payments:getAll") || []
+      const transactions = await this.query("paymentTransactions:getAll") || []
 
       if (transactions.length === 0) {
         return {
@@ -389,7 +399,7 @@ class AdminService extends BaseService {
       }
 
       // Get payment transactions to calculate mentor performance
-      const transactions = await this.query("payments:getAll") || []
+      const transactions = await this.query("paymentTransactions:getAll") || []
 
       const mentorPerformance = mentors.map((mentor: any) => {
         // Get mentor's transactions
@@ -447,7 +457,7 @@ class AdminService extends BaseService {
     try {
       // Get all users and transactions
       const users = await this.query("users:getAll") || []
-      const transactions = await this.query("payments:getAll") || []
+      const transactions = await this.query("paymentTransactions:getAll") || []
 
       // Total students (users with 'siswa' role)
       const students = users.filter((u: any) => u.role === 'siswa')
@@ -498,39 +508,16 @@ class AdminService extends BaseService {
     }
   }
 
-  // System Settings Management
-  async getSettings(group?: string) {
+  // System Settings Management - Static methods
+  static useSettings(group?: string) {
     if (group) {
-      return await this.provider.useQuery(api.adminSettings.getByGroup, { settingGroup: group });
+      return this.useQuery<AdminSettings[]>('adminSettings.getByGroup', { settingGroup: group });
     }
-    return await this.provider.useQuery(api.adminSettings.getAll, {});
+    return this.useQuery<AdminSettings[]>('adminSettings.getAll', {});
   }
 
-  async updateSetting(key: string, value: any, group: string = 'general') {
-    return await this.provider.useMutation(api.adminSettings.update, {
-      settingGroup: group,
-      settingKey: key,
-      settingValue: value
-    });
-  }
-
-  // Bulk Operations
-  async bulkUpdatePricingRules(rules: Array<{ id: Id<"adminPricingRules">; updates: Partial<AdminPricingRule> }>) {
-    const results = [];
-    for (const rule of rules) {
-      const result = await this.updatePricingRule(rule.id, rule.updates);
-      results.push(result);
-    }
-    return results;
-  }
-
-  async bulkToggleDiscountRules(ruleIds: Id<"discountRules">[]) {
-    const results = [];
-    for (const id of ruleIds) {
-      const result = await this.provider.useMutation(api.discountRules.toggleActive, { id });
-      results.push(result);
-    }
-    return results;
+  static useUpdateSetting() {
+    return this.useMutation<Id<"adminSettings">>('adminSettings.update');
   }
 }
 
