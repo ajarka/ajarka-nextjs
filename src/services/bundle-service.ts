@@ -47,6 +47,25 @@ export interface UpdateBundleRequest {
   isActive?: boolean
 }
 
+export interface StudentSubscription {
+  _id: Id<"studentSubscriptions">
+  studentId: Id<"users">
+  bundleId: Id<"bundlePackages">
+  bundleName: string
+  totalSessions: number
+  usedSessions: number
+  remainingSessions: number
+  originalPrice: number
+  paidPrice: number
+  discountAmount: number
+  purchaseDate: string
+  expiryDate: string
+  status: 'active' | 'expired' | 'cancelled' | 'suspended'
+  transactions: string[]
+  createdAt: string
+  updatedAt: string
+}
+
 export class BundleService extends BaseService {
   // ==================== QUERY METHODS ====================
 
@@ -76,6 +95,44 @@ export class BundleService extends BaseService {
    */
   static useActiveBundles() {
     return this.useQuery<BundlePackage[]>('bundlePackages.getActive')
+  }
+
+  // ==================== SUBSCRIPTION QUERY METHODS ====================
+
+  /**
+   * Get student subscriptions by student ID
+   */
+  static useStudentSubscriptions(studentId: Id<"users"> | string) {
+    // Handle string version for compatibility
+    if (typeof studentId === 'string') {
+      return this.useQuery<StudentSubscription[]>('studentSubscriptions.getByStudentString', { studentId })
+    }
+    return this.useQuery<StudentSubscription[]>('studentSubscriptions.getByStudent', { studentId })
+  }
+
+  /**
+   * Get active subscription for a student
+   */
+  static useActiveSubscription(studentId: Id<"users"> | string) {
+    // Handle string version for compatibility
+    if (typeof studentId === 'string') {
+      return this.useQuery<StudentSubscription | null>('studentSubscriptions.getActiveSubscriptionString', { studentId })
+    }
+    return this.useQuery<StudentSubscription | null>('studentSubscriptions.getActiveSubscription', { studentId })
+  }
+
+  /**
+   * Get subscriptions by bundle ID
+   */
+  static useSubscriptionsByBundle(bundleId: Id<"bundlePackages">) {
+    return this.useQuery<StudentSubscription[]>('studentSubscriptions.getByBundle', { bundleId })
+  }
+
+  /**
+   * Get subscriptions by status
+   */
+  static useSubscriptionsByStatus(status: StudentSubscription['status']) {
+    return this.useQuery<StudentSubscription[]>('studentSubscriptions.getByStatus', { status })
   }
 
   // ==================== MUTATION METHODS ====================
@@ -132,6 +189,64 @@ export class BundleService extends BaseService {
       },
       onError: (error) => {
         console.error('Failed to toggle bundle status:', error)
+      }
+    })
+  }
+
+  // ==================== SUBSCRIPTION MUTATION METHODS ====================
+
+  /**
+   * Create new student subscription
+   */
+  static useCreateSubscription() {
+    return this.useMutation<Id<"studentSubscriptions">>('studentSubscriptions.create', {
+      onSuccess: (subscriptionId) => {
+        console.log('Subscription created successfully:', subscriptionId)
+      },
+      onError: (error) => {
+        console.error('Failed to create subscription:', error)
+      }
+    })
+  }
+
+  /**
+   * Use a session from subscription
+   */
+  static useSessionFromSubscription() {
+    return this.useMutation<Id<"studentSubscriptions">>('studentSubscriptions.useSession', {
+      onSuccess: (subscriptionId) => {
+        console.log('Session used from subscription:', subscriptionId)
+      },
+      onError: (error) => {
+        console.error('Failed to use session:', error)
+      }
+    })
+  }
+
+  /**
+   * Update subscription status
+   */
+  static useUpdateSubscriptionStatus() {
+    return this.useMutation<Id<"studentSubscriptions">>('studentSubscriptions.updateStatus', {
+      onSuccess: (subscriptionId) => {
+        console.log('Subscription status updated:', subscriptionId)
+      },
+      onError: (error) => {
+        console.error('Failed to update subscription status:', error)
+      }
+    })
+  }
+
+  /**
+   * Cancel subscription
+   */
+  static useCancelSubscription() {
+    return this.useMutation<Id<"studentSubscriptions">>('studentSubscriptions.cancel', {
+      onSuccess: (subscriptionId) => {
+        console.log('Subscription cancelled:', subscriptionId)
+      },
+      onError: (error) => {
+        console.error('Failed to cancel subscription:', error)
       }
     })
   }

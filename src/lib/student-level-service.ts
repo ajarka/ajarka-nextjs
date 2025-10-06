@@ -104,35 +104,31 @@ export class StudentLevelService {
   // Get student's current progress and level
   static async getStudentProgress(studentId: number): Promise<StudentProgress | null> {
     try {
-      const response = await fetch(`${this.BASE_URL}/student_progress?studentId=${studentId}`)
-      const progressData = await response.json()
-      
-      if (progressData.length === 0) {
-        // If no progress exists, return default beginner level
-        return {
-          id: `PROGRESS-STUDENT-${studentId}`,
-          studentId,
-          journeyId: 'JOURNEY-DEFAULT-001',
-          currentLevel: 1,
-          currentPhase: 'PHASE-0',
-          status: 'active',
-          startedAt: new Date().toISOString(),
-          completedMaterials: [],
-          completedAssignments: [],
-          completedProjects: [],
-          skillsAcquired: [],
-          certificates: [],
-          totalScore: 0,
-          averageScore: 0,
-          lastActivityAt: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
+      // TODO: Implement Convex DB integration for student progress
+      // For now, return default beginner level to avoid fetch errors
+      console.log('Using default student progress (Convex migration pending)')
+
+      return {
+        id: `PROGRESS-STUDENT-${studentId}`,
+        studentId,
+        journeyId: 'JOURNEY-DEFAULT-001',
+        currentLevel: 1,
+        currentPhase: 'PHASE-0',
+        status: 'active',
+        startedAt: new Date().toISOString(),
+        completedMaterials: [],
+        completedAssignments: [],
+        completedProjects: [],
+        skillsAcquired: [],
+        certificates: [],
+        totalScore: 0,
+        averageScore: 0,
+        lastActivityAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       }
-      
-      return progressData[0]
     } catch (error) {
-      console.error('Error fetching student progress:', error)
+      console.error('Error getting student progress:', error)
       return null
     }
   }

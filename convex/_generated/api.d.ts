@@ -34,6 +34,7 @@ import type * as roadmaps from "../roadmaps.js";
 import type * as seedAdmin from "../seedAdmin.js";
 import type * as seedData from "../seedData.js";
 import type * as slotRequests from "../slotRequests.js";
+import type * as studentSubscriptions from "../studentSubscriptions.js";
 import type * as testAuth from "../testAuth.js";
 import type * as updateAdminPassword from "../updateAdminPassword.js";
 import type * as users from "../users.js";
@@ -68,6 +69,7 @@ declare const fullApi: ApiFromModules<{
   seedAdmin: typeof seedAdmin;
   seedData: typeof seedData;
   slotRequests: typeof slotRequests;
+  studentSubscriptions: typeof studentSubscriptions;
   testAuth: typeof testAuth;
   updateAdminPassword: typeof updateAdminPassword;
   users: typeof users;

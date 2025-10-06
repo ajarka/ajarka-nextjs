@@ -52,6 +52,9 @@ import PaymentButton from '@/components/payment/payment-button'
 import { StudentLevelService, MentorScheduleWithLevels, LevelCheckResult, StudentProgress } from '@/lib/student-level-service'
 import { SlotRequestService, SlotRequest } from '@/lib/slot-request-service'
 import FlexibleCalendar from '@/components/ui/flexible-calendar'
+import { useQuery } from 'convex/react'
+import { api } from '../../../convex/_generated/api'
+import { MentorScheduleService } from '@/services/mentor-schedule-service'
 
 interface Mentor {
   id: number
@@ -107,6 +110,16 @@ interface BookingFormData {
 export default function StudentBookingInterface({ studentId }: { studentId: number }) {
   const { data: session } = useSession()
   const { generateMeeting, isGenerating, error: meetingError, clearError } = useMeetingGeneration()
+
+  // Convex queries - real-time data
+  const convexBundles = useQuery(api.bundlePackages.getActive, {})
+  const convexActiveSubscription = useQuery(api.studentSubscriptions.getActiveSubscriptionString, { studentId: String(studentId) })
+  const convexSlotRequests = useQuery(api.slotRequests.getByStudent, { studentId: String(studentId) })
+  const convexMentors = useQuery(api.users.getByRole, { role: 'mentor' })
+  const convexSchedules = useQuery(api.mentorSchedules.getAll, {})
+  const convexAvailabilities = useQuery(api.availabilitySlots.getAll, {})
+  const convexBookings = useQuery(api.bookings.getAll, {})
+
   const [mentors, setMentors] = useState<Mentor[]>([])
   const [schedules, setSchedules] = useState<MentorSchedule[]>([])
   const [availabilities, setAvailabilities] = useState<AvailabilitySlot[]>([])
@@ -119,14 +132,14 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
   const [searchQuery, setSearchQuery] = useState('')
   const [availableDates, setAvailableDates] = useState<Date[]>([])
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([])
-  
+
   // Level-based filtering state
   const [studentProgress, setStudentProgress] = useState<StudentProgress | null>(null)
   const [scheduleCompatibility, setScheduleCompatibility] = useState<Map<number, LevelCheckResult>>(new Map())
   const [showLevelVerificationDialog, setShowLevelVerificationDialog] = useState(false)
   const [recommendedSchedules, setRecommendedSchedules] = useState<MentorSchedule[]>([])
   const [showAllSchedules, setShowAllSchedules] = useState(false)
-  
+
   // Slot request state
   const [slotRequests, setSlotRequests] = useState<SlotRequest[]>([])
   const [showSlotRequestDialog, setShowSlotRequestDialog] = useState(false)
@@ -136,10 +149,10 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
     time: '',
     notes: ''
   })
-  
+
   // Admin pricing rules
   const [adminPricingRules, setAdminPricingRules] = useState<AdminPricingRule[]>([])
-  
+
   // Bundle and subscription state
   const [bundlePackages, setBundlePackages] = useState<BundlePackage[]>([])
   const [activeSubscription, setActiveSubscription] = useState<StudentSubscription | null>(null)
@@ -156,12 +169,62 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
     notes: ''
   })
 
+  // Sync Convex data to local state
   useEffect(() => {
-    fetchData()
+    if (convexBundles) {
+      setBundlePackages(convexBundles as any)
+    }
+  }, [convexBundles])
+
+  useEffect(() => {
+    if (convexActiveSubscription !== undefined) {
+      setActiveSubscription(convexActiveSubscription as any)
+    }
+  }, [convexActiveSubscription])
+
+  useEffect(() => {
+    if (convexSlotRequests) {
+      const requestsWithLegacyId = MentorScheduleService.addLegacyFieldsToArray(convexSlotRequests)
+      setSlotRequests(requestsWithLegacyId as any)
+    }
+  }, [convexSlotRequests])
+
+  useEffect(() => {
+    if (convexMentors) {
+      const mentorsWithLegacyId = MentorScheduleService.addLegacyFieldsToArray(convexMentors)
+      setMentors(mentorsWithLegacyId as any)
+    }
+  }, [convexMentors])
+
+  useEffect(() => {
+    if (convexSchedules) {
+      const schedulesWithLegacyId = MentorScheduleService.addLegacyFieldsToArray(convexSchedules)
+      setSchedules(schedulesWithLegacyId.filter((s: any) => s.isActive) as any)
+      setLoading(false)
+    }
+  }, [convexSchedules])
+
+  useEffect(() => {
+    if (convexAvailabilities) {
+      const availsWithLegacyId = MentorScheduleService.addLegacyFieldsToArray(convexAvailabilities)
+      setAvailabilities(availsWithLegacyId.filter((a: any) => a.isActive) as any)
+    }
+  }, [convexAvailabilities])
+
+  useEffect(() => {
+    if (convexBookings) {
+      const bookingsWithLegacyId = MentorScheduleService.addLegacyFieldsToArray(convexBookings)
+      // Filter out bookings with invalid dates
+      const validBookings = bookingsWithLegacyId.filter((booking: any) => {
+        return safeParseDate(booking.date || booking.bookingDate) !== null
+      })
+      setBookings(validBookings as any)
+    }
+  }, [convexBookings])
+
+  useEffect(() => {
     fetchAdminPricingRules()
-    fetchBundleData()
     fetchStudentProgress()
-    fetchSlotRequests()
   }, [])
 
   useEffect(() => {
@@ -180,19 +243,7 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
     }
   }
 
-  const fetchBundleData = async () => {
-    try {
-      const [bundles, subscription] = await Promise.all([
-        BundleService.getAllBundlePackages(),
-        BundleService.getActiveSubscription(studentId)
-      ])
-      
-      setBundlePackages(bundles)
-      setActiveSubscription(subscription)
-    } catch (error) {
-      console.error('Error fetching bundle data:', error)
-    }
-  }
+  // Removed - now using Convex hooks (convexBundles, convexActiveSubscription)
 
   const fetchStudentProgress = async () => {
     try {
@@ -241,14 +292,7 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
     }
   }
 
-  const fetchSlotRequests = async () => {
-    try {
-      const requests = await SlotRequestService.getStudentSlotRequests(studentId)
-      setSlotRequests(requests)
-    } catch (error) {
-      console.error('Error fetching slot requests:', error)
-    }
-  }
+  // Removed - now using Convex hooks (convexSlotRequests)
 
   const handleSlotRequest = async (date: Date) => {
     if (!selectedSchedule || !selectedMentor) return
@@ -281,8 +325,8 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
 
       setShowSlotRequestDialog(false)
       setSlotRequestData({ date: null, time: '', notes: '' })
-      await fetchSlotRequests()
-      
+      // Data will auto-update via Convex hooks
+
       alert('Slot request submitted successfully! The mentor will review your request and respond soon.')
     } catch (error) {
       console.error('Error submitting slot request:', error)
@@ -333,39 +377,7 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
     }
   }, [bookingForm.selectedDate, selectedSchedule, availabilities, bookings])
 
-  const fetchData = async () => {
-    try {
-      // Fetch mentors
-      const mentorsResponse = await fetch('http://localhost:3001/users?role=mentor')
-      const mentorsData = await mentorsResponse.json()
-      setMentors(mentorsData)
-
-      // Fetch all schedules
-      const schedulesResponse = await fetch('http://localhost:3001/mentor_schedules')
-      const schedulesData = await schedulesResponse.json()
-      setSchedules(schedulesData.filter((s: MentorSchedule) => s.isActive))
-
-      // Fetch all availabilities
-      const availResponse = await fetch('http://localhost:3001/mentor_availability')
-      const availData = await availResponse.json()
-      setAvailabilities(availData.filter((a: AvailabilitySlot) => a.isActive))
-
-      // Fetch existing bookings
-      const bookingsResponse = await fetch('http://localhost:3001/bookings')
-      const bookingsData = await bookingsResponse.json()
-      
-      // Filter out bookings with invalid dates
-      const validBookings = bookingsData.filter((booking: Booking) => {
-        return safeParseDate(booking.bookingDate) !== null
-      })
-      
-      setBookings(validBookings)
-    } catch (error) {
-      console.error('Error fetching data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Removed - now using Convex hooks (convexMentors, convexSchedules, convexAvailabilities, convexBookings)
 
   const calculateAvailableDates = () => {
     if (!selectedSchedule) {
@@ -575,9 +587,7 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
   const handlePaymentSuccess = (transactionId: string) => {
     setShowPaymentDialog(false)
     setShowBookingDialog(false)
-    // Refresh data and show success message
-    fetchData()
-    fetchBundleData()
+    // Data will auto-update via Convex hooks
     alert('Booking successful! Payment confirmed.')
   }
 
@@ -611,8 +621,7 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
         await handlePostBookingActions(bookingData)
         
         setShowBookingDialog(false)
-        fetchData()
-        fetchBundleData()
+        // Data will auto-update via Convex hooks
         alert('Session booked using your subscription!')
       }
     } catch (error) {
@@ -749,7 +758,7 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
       if (response.ok) {
         const bookingData = await response.json()
         await handlePostBookingActions(bookingData)
-        await fetchData()
+        // Data will auto-update via Convex hooks
         setShowBookingDialog(false)
         resetBookingForm()
       }
@@ -1600,7 +1609,7 @@ export default function StudentBookingInterface({ studentId }: { studentId: numb
                         transactionId
                       }).then(() => {
                         handlePaymentSuccess(transactionId)
-                        fetchBundleData() // Refresh bundle data
+                        // Bundle data will auto-update via Convex hooks
                       })
                     }}
                     onPaymentError={handlePaymentError}
