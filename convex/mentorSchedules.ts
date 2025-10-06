@@ -25,6 +25,17 @@ export const getByMentor = query({
   },
 });
 
+// Support string mentorId for compatibility
+export const getByMentorString = query({
+  args: { mentorId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("mentorSchedules")
+      .withIndex("by_mentor", (q) => q.eq("mentorId", args.mentorId))
+      .collect();
+  },
+});
+
 export const getByDate = query({
   args: { date: v.string() },
   handler: async (ctx, args) => {

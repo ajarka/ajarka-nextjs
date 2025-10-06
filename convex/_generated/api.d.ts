@@ -16,6 +16,8 @@ import type {
 import type * as adminOfficeLocations from "../adminOfficeLocations.js";
 import type * as adminPricingRules from "../adminPricingRules.js";
 import type * as auth from "../auth.js";
+import type * as availabilitySlots from "../availabilitySlots.js";
+import type * as bookings from "../bookings.js";
 import type * as bundlePackages from "../bundlePackages.js";
 import type * as categories from "../categories.js";
 import type * as comments from "../comments.js";
@@ -31,6 +33,7 @@ import type * as payments from "../payments.js";
 import type * as roadmaps from "../roadmaps.js";
 import type * as seedAdmin from "../seedAdmin.js";
 import type * as seedData from "../seedData.js";
+import type * as slotRequests from "../slotRequests.js";
 import type * as testAuth from "../testAuth.js";
 import type * as updateAdminPassword from "../updateAdminPassword.js";
 import type * as users from "../users.js";
@@ -47,6 +50,8 @@ declare const fullApi: ApiFromModules<{
   adminOfficeLocations: typeof adminOfficeLocations;
   adminPricingRules: typeof adminPricingRules;
   auth: typeof auth;
+  availabilitySlots: typeof availabilitySlots;
+  bookings: typeof bookings;
   bundlePackages: typeof bundlePackages;
   categories: typeof categories;
   comments: typeof comments;
@@ -62,6 +67,7 @@ declare const fullApi: ApiFromModules<{
   roadmaps: typeof roadmaps;
   seedAdmin: typeof seedAdmin;
   seedData: typeof seedData;
+  slotRequests: typeof slotRequests;
   testAuth: typeof testAuth;
   updateAdminPassword: typeof updateAdminPassword;
   users: typeof users;

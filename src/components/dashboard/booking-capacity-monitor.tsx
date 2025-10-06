@@ -5,10 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
-import { 
-  Users, 
+import {
+  Users,
   Calendar,
-  Clock, 
+  Clock,
   AlertTriangle,
   CheckCircle,
   XCircle,
@@ -18,6 +18,9 @@ import {
 import { motion } from "framer-motion"
 import { format, parseISO, isToday, isTomorrow, addDays } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
+import { useQuery } from 'convex/react'
+import { api } from '../../../convex/_generated/api'
+import { MentorScheduleService } from '@/services/mentor-schedule-service'
 
 interface Booking {
   id: number
@@ -59,32 +62,29 @@ interface CapacitySlot {
 }
 
 export default function BookingCapacityMonitor({ mentorId }: { mentorId: number }) {
+  // Convex queries - real-time data
+  const convexSchedules = useQuery(api.mentorSchedules.getByMentorString, { mentorId: String(mentorId) })
+  const convexBookings = useQuery(api.bookings.getByMentor, { mentorId: String(mentorId) })
+
   const [capacitySlots, setCapacitySlots] = useState<CapacitySlot[]>([])
   const [schedules, setSchedules] = useState<MentorSchedule[]>([])
   const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
 
+  // Process capacity data when Convex data changes
   useEffect(() => {
-    fetchCapacityData()
-    // Set up auto-refresh every 30 seconds
-    const interval = setInterval(fetchCapacityData, 30000)
-    return () => clearInterval(interval)
-  }, [mentorId])
+    if (!convexSchedules || !convexBookings) {
+      setLoading(true)
+      return
+    }
 
-  const fetchCapacityData = async () => {
-    if (loading) setLoading(true)
-    else setRefreshing(true)
-    
     try {
-      // Fetch mentor schedules
-      const schedulesResponse = await fetch(`http://localhost:3001/mentor_schedules?mentorId=${mentorId}`)
-      const schedulesData = await schedulesResponse.json()
-      const activeSchedules = schedulesData.filter((s: MentorSchedule) => s.isActive)
-      setSchedules(activeSchedules)
+      // Convert Convex schedules to component format
+      const schedulesData = MentorScheduleService.addLegacyFieldsToArray(convexSchedules)
+      const activeSchedules = schedulesData.filter((s: any) => s.isActive)
+      setSchedules(activeSchedules as any)
 
-      // Fetch all bookings for this mentor
-      const bookingsResponse = await fetch(`http://localhost:3001/bookings?mentorId=${mentorId}`)
-      const bookingsData = await bookingsResponse.json()
+      // Convert Convex bookings to component format
+      const bookingsData = MentorScheduleService.addLegacyFieldsToArray(convexBookings)
 
       // Process capacity data for next 7 days
       const capacityData: CapacitySlot[] = []
@@ -164,13 +164,12 @@ export default function BookingCapacityMonitor({ mentorId }: { mentorId: number 
       })
 
       setCapacitySlots(capacityData)
-    } catch (error) {
-      console.error('Error fetching capacity data:', error)
-    } finally {
       setLoading(false)
-      setRefreshing(false)
+    } catch (error) {
+      console.error('Error processing capacity data:', error)
+      setLoading(false)
     }
-  }
+  }, [convexSchedules, convexBookings])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -230,16 +229,10 @@ export default function BookingCapacityMonitor({ mentorId }: { mentorId: number 
               Real-time booking capacity for your sessions
             </CardDescription>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchCapacityData}
-            disabled={refreshing}
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            {refreshing ? 'Refreshing...' : 'Refresh'}
-          </Button>
+          <Badge variant="outline" className="gap-2">
+            <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+            Live Updates
+          </Badge>
         </div>
       </CardHeader>
       <CardContent>

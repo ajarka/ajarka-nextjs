@@ -244,26 +244,18 @@ class LearningService extends BaseService {
   }
 
   // Legacy methods for backward compatibility
+  // NOTE: These methods cannot use hooks (useQuery) in async functions
+  // Components should use the hook methods above (useLearningMaterials, etc) instead
   async getLearningMaterials(): Promise<any[]> {
-    const materials = await this.provider.useQuery(api.learningMaterials.getAll, {});
-    return (materials || []).map(material => ({
-      ...material,
-      id: material._id // Add legacy id field
-    }));
+    // Return empty array - components should use useLearningMaterials() hook instead
+    console.warn('getLearningMaterials() is deprecated. Use useLearningMaterials() hook instead.');
+    return [];
   }
 
   async getLearningMaterial(id: string): Promise<any | null> {
-    try {
-      const material = await this.provider.useQuery(api.learningMaterials.getById, { id: id as Id<"learningMaterials"> });
-      if (!material) return null;
-      return {
-        ...material,
-        id: material._id // Add legacy id field
-      };
-    } catch (error) {
-      console.error('Error fetching learning material:', error);
-      return null;
-    }
+    // Return null - components should use useLearningMaterial() hook instead
+    console.warn('getLearningMaterial() is deprecated. Use useLearningMaterial() hook instead.');
+    return null;
   }
 
   async getLearningJourneys(): Promise<any[]> {

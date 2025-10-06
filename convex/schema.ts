@@ -555,33 +555,75 @@ export default defineSchema({
 
   // Mentor Schedules - jadwal mentor yang available
   mentorSchedules: defineTable({
-    mentorId: v.id("users"),
-    date: v.string(),
-    timeSlots: v.array(v.object({
-      startTime: v.string(),
-      endTime: v.string(),
-      isAvailable: v.boolean(),
-      isBooked: v.boolean(),
-      bookingId: v.optional(v.string()),
-      sessionType: v.union(v.literal("online"), v.literal("offline")),
-      maxStudents: v.number(),
-      currentStudents: v.number(),
-      materials: v.optional(v.array(v.string())),
-      notes: v.optional(v.string()),
-    })),
-    recurringType: v.optional(v.union(
-      v.literal("none"),
-      v.literal("daily"),
-      v.literal("weekly"),
-      v.literal("monthly")
-    )),
-    recurringUntil: v.optional(v.string()),
+    mentorId: v.string(), // Store as string untuk compatibility
+    title: v.string(),
+    description: v.string(),
+    duration: v.number(),
+    maxCapacity: v.number(),
+    materials: v.array(v.string()),
+    materialIds: v.optional(v.array(v.string())),
+    requiredLevel: v.optional(v.number()),
+    maxLevelGap: v.optional(v.number()),
+    verificationRequired: v.optional(v.boolean()),
+    autoLevelCheck: v.optional(v.boolean()),
+    allowLevelJumpers: v.optional(v.boolean()),
+    meetingType: v.union(v.literal("online"), v.literal("offline")),
+    meetingProvider: v.union(v.literal("zoom"), v.literal("google-meet")),
+    locationId: v.optional(v.number()),
+    timezone: v.string(),
     isActive: v.boolean(),
-    lastModified: v.string(),
     createdAt: v.string(),
     updatedAt: v.string(),
   })
   .index("by_mentor", ["mentorId"])
-  .index("by_date", ["date"])
   .index("by_active", ["isActive"]),
+
+  // Availability Slots - slot waktu tersedia untuk mentor
+  availabilitySlots: defineTable({
+    mentorId: v.string(),
+    scheduleId: v.optional(v.id("mentorSchedules")),
+    dayOfWeek: v.number(), // 0-6 (Sunday-Saturday)
+    startTime: v.string(), // HH:MM format
+    endTime: v.string(), // HH:MM format
+    isRecurring: v.boolean(),
+    specificDate: v.optional(v.string()), // YYYY-MM-DD for non-recurring
+    isActive: v.boolean(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  })
+  .index("by_mentor", ["mentorId"])
+  .index("by_schedule", ["scheduleId"])
+  .index("by_day", ["dayOfWeek"])
+  .index("by_active", ["isActive"]),
+
+  // Slot Requests - permintaan booking slot dari siswa
+  slotRequests: defineTable({
+    studentId: v.string(),
+    studentName: v.string(),
+    studentEmail: v.string(),
+    mentorId: v.string(),
+    scheduleId: v.string(),
+    scheduleTitle: v.string(),
+    requestedDate: v.string(), // YYYY-MM-DD
+    requestedTime: v.string(), // HH:MM
+    duration: v.number(),
+    preferredMeetingType: v.union(v.literal("online"), v.literal("offline")),
+    materials: v.array(v.string()),
+    notes: v.optional(v.string()),
+    priority: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("rejected"),
+      v.literal("cancelled")
+    ),
+    responseMessage: v.optional(v.string()),
+    respondedAt: v.optional(v.string()),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  })
+  .index("by_student", ["studentId"])
+  .index("by_mentor", ["mentorId"])
+  .index("by_status", ["status"])
+  .index("by_date", ["requestedDate"]),
 });

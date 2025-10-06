@@ -40,6 +40,9 @@ import { AdminService, AdminPricingRule, AdminOfficeLocation } from '@/lib/admin
 import { learningService, type LearningMaterial } from '@/lib/learning-service'
 import MentorScheduleDialog from './mentor-schedule-manager-dialog'
 import MentorSlotRequests from './mentor-slot-requests'
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '../../../convex/_generated/api'
+import { MentorScheduleService } from '@/services/mentor-schedule-service'
 
 interface MentorSchedule {
   id?: number
@@ -89,6 +92,21 @@ const TIME_SLOTS = Array.from({ length: 24 }, (_, i) => {
 export default function MentorScheduleManager({ mentorId }: { mentorId: number }) {
   const { data: session } = useSession()
   const { generateMeeting, isGenerating, error: meetingError, clearError } = useMeetingGeneration()
+
+  // Convex queries
+  const convexSchedules = useQuery(api.mentorSchedules.getByMentorString, { mentorId: String(mentorId) })
+  const convexMaterials = useQuery(api.learningMaterials.getAll, {})
+  const convexSlots = useQuery(api.availabilitySlots.getByMentor, { mentorId: String(mentorId) })
+  const convexBookings = useQuery(api.bookings.getByMentor, { mentorId: String(mentorId) })
+
+  // Convex mutations
+  const createScheduleMutation = useMutation(api.mentorSchedules.create)
+  const updateScheduleMutation = useMutation(api.mentorSchedules.update)
+  const deleteScheduleMutation = useMutation(api.mentorSchedules.remove)
+  const createSlotMutation = useMutation(api.availabilitySlots.create)
+  const updateSlotMutation = useMutation(api.availabilitySlots.update)
+  const deleteSlotMutation = useMutation(api.availabilitySlots.remove)
+
   const [schedules, setSchedules] = useState<MentorSchedule[]>([])
   const [availabilities, setAvailabilities] = useState<AvailabilitySlot[]>([])
   const [bookings, setBookings] = useState<any[]>([])
@@ -134,10 +152,42 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
     isActive: true
   })
 
+  // Sync Convex data to local state
   useEffect(() => {
-    fetchSchedules()
+    if (convexSchedules) {
+      const schedulesWithLegacyId = MentorScheduleService.addLegacyFieldsToArray(convexSchedules)
+      setSchedules(schedulesWithLegacyId as any)
+      setLoading(false)
+
+      if (schedulesWithLegacyId.length > 0 && !activeSchedule) {
+        setActiveSchedule(schedulesWithLegacyId[0] as any)
+      }
+    }
+  }, [convexSchedules])
+
+  useEffect(() => {
+    if (convexMaterials) {
+      const materialsWithLegacyId = MentorScheduleService.addLegacyFieldsToArray(convexMaterials)
+      setAvailableMaterials(materialsWithLegacyId.filter((m: any) => m.isActive) as any)
+    }
+  }, [convexMaterials])
+
+  useEffect(() => {
+    if (convexSlots) {
+      const slotsWithLegacyId = MentorScheduleService.addLegacyFieldsToArray(convexSlots)
+      setAvailabilities(slotsWithLegacyId as any)
+    }
+  }, [convexSlots])
+
+  useEffect(() => {
+    if (convexBookings) {
+      const bookingsWithLegacyId = MentorScheduleService.addLegacyFieldsToArray(convexBookings)
+      setBookings(bookingsWithLegacyId as any)
+    }
+  }, [convexBookings])
+
+  useEffect(() => {
     fetchAdminSettings()
-    fetchLearningMaterials()
   }, [mentorId])
 
   useEffect(() => {
@@ -161,14 +211,7 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
     }
   }
 
-  const fetchLearningMaterials = async () => {
-    try {
-      const materials = await learningService.getLearningMaterials()
-      setAvailableMaterials(materials.filter(m => m.isActive))
-    } catch (error) {
-      console.error('Error fetching learning materials:', error)
-    }
-  }
+  // Removed - now using Convex hooks (convexMaterials)
 
   const calculatePricing = () => {
     const materialsToUse = newSchedule.materialIds && newSchedule.materialIds.length > 0 
@@ -194,92 +237,69 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
     setMentorFee(mentorFeeAmount)
   }
 
-  const fetchSchedules = async () => {
-    try {
-      const response = await fetch(`http://localhost:3001/mentor_schedules?mentorId=${mentorId}`)
-      const schedulesData = await response.json()
-      setSchedules(schedulesData)
-      
-      if (schedulesData.length > 0) {
-        setActiveSchedule(schedulesData[0])
-        fetchAvailabilities(schedulesData[0].id)
-        fetchBookings()
-      }
-    } catch (error) {
-      console.error('Error fetching schedules:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchAvailabilities = async (scheduleId: number) => {
-    try {
-      const response = await fetch(`http://localhost:3001/mentor_availability?scheduleId=${scheduleId}`)
-      const availData = await response.json()
-      setAvailabilities(availData)
-    } catch (error) {
-      console.error('Error fetching availabilities:', error)
-    }
-  }
-
-  const fetchBookings = async () => {
-    try {
-      const response = await fetch(`http://localhost:3001/bookings?mentorId=${mentorId}`)
-      const bookingsData = await response.json()
-      setBookings(bookingsData)
-    } catch (error) {
-      console.error('Error fetching bookings:', error)
-    }
-  }
+  // Removed - now using Convex hooks (convexSchedules)
+  // Removed - now using Convex hooks (convexSlots)
+  // Removed - now using Convex hooks (convexBookings)
 
   const createSchedule = async () => {
     setSaving(true)
     try {
-      const response = await fetch('http://localhost:3001/mentor_schedules', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...newSchedule,
-          mentorId,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        })
+      const scheduleId = await createScheduleMutation({
+        mentorId: String(mentorId),
+        title: newSchedule.title,
+        description: newSchedule.description,
+        duration: newSchedule.duration,
+        maxCapacity: newSchedule.maxCapacity,
+        materials: newSchedule.materials,
+        materialIds: newSchedule.materialIds || [],
+        requiredLevel: newSchedule.requiredLevel,
+        maxLevelGap: newSchedule.maxLevelGap,
+        verificationRequired: newSchedule.verificationRequired,
+        autoLevelCheck: newSchedule.autoLevelCheck,
+        allowLevelJumpers: newSchedule.allowLevelJumpers,
+        meetingType: newSchedule.meetingType,
+        meetingProvider: newSchedule.meetingProvider,
+        locationId: newSchedule.locationId,
+        timezone: newSchedule.timezone,
+        isActive: newSchedule.isActive,
       })
-      
-      if (response.ok) {
-        const scheduleData = await response.json()
-        
-        // Send notifications to all students
-        if (session?.user) {
-          try {
-            await NotificationService.notifyScheduleCreated(
-              session.user.id,
-              session.user.name || 'Mentor',
-              scheduleData.id.toString(),
-              newSchedule.title
-            )
-            console.log('Notifications sent to students')
-          } catch (notificationError) {
-            console.warn('Failed to send notifications:', notificationError)
-          }
-        }
 
-        await fetchSchedules()
-        setNewSchedule({
-          title: '',
-          description: '',
-          duration: 60,
-          maxCapacity: 1,
-          materials: [],
-          meetingType: 'online',
-          meetingProvider: 'google-meet',
-          timezone: 'Asia/Jakarta',
-          isActive: true
-        })
-        setCalculatedPrice(0)
-        setMentorFee(0)
-        setIsDialogOpen(false)
+      // Send notifications to all students
+      if (session?.user && scheduleId) {
+        try {
+          await NotificationService.notifyScheduleCreated(
+            session.user.id,
+            session.user.name || 'Mentor',
+            scheduleId.toString(),
+            newSchedule.title
+          )
+          console.log('Notifications sent to students')
+        } catch (notificationError) {
+          console.warn('Failed to send notifications:', notificationError)
+        }
       }
+
+      // Reset form
+      setNewSchedule({
+        title: '',
+        description: '',
+        duration: 60,
+        maxCapacity: 1,
+        materials: [],
+        materialIds: [],
+        requiredLevel: 1,
+        maxLevelGap: 2,
+        verificationRequired: false,
+        autoLevelCheck: true,
+        allowLevelJumpers: false,
+        meetingType: 'online',
+        meetingProvider: 'google-meet',
+        timezone: 'Asia/Jakarta',
+        isActive: true
+      })
+      setCalculatedPrice(0)
+      setMentorFee(0)
+      setIsDialogOpen(false)
     } catch (error) {
       console.error('Error creating schedule:', error)
     } finally {
@@ -289,23 +309,24 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
 
   const addAvailability = async (availabilityData: any) => {
     if (!activeSchedule?.id) return
-    
+
     setSaving(true)
     try {
-      const response = await fetch('http://localhost:3001/mentor_availability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...availabilityData,
-          mentorId,
-          isActive: true,
-          createdAt: new Date().toISOString()
-        })
+      // Find the Convex schedule ID from activeSchedule
+      const convexSchedule = convexSchedules?.find(s =>
+        MentorScheduleService.convexIdToLegacyId(s._id) === activeSchedule.id
+      )
+
+      await createSlotMutation({
+        mentorId: String(mentorId),
+        scheduleId: convexSchedule?._id,
+        dayOfWeek: availabilityData.dayOfWeek,
+        startTime: availabilityData.startTime,
+        endTime: availabilityData.endTime,
+        isRecurring: availabilityData.isRecurring ?? true,
+        specificDate: availabilityData.specificDate,
+        isActive: true,
       })
-      
-      if (response.ok) {
-        await fetchAvailabilities(activeSchedule.id)
-      }
     } catch (error) {
       console.error('Error adding availability:', error)
       throw error
@@ -316,52 +337,54 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
 
   const updateAvailability = async (availabilityId: number, availabilityData: any) => {
     if (!activeSchedule?.id) return
-    
+
     setSaving(true)
     try {
-      // Get current availability data for comparison
-      const currentResponse = await fetch(`http://localhost:3001/mentor_availability/${availabilityId}`)
-      const currentAvailability = await currentResponse.json()
+      // Find the Convex slot ID from availabilityId
+      const convexSlot = convexSlots?.find(s =>
+        MentorScheduleService.convexIdToLegacyId(s._id) === availabilityId
+      )
 
-      const response = await fetch(`http://localhost:3001/mentor_availability/${availabilityId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...availabilityData,
-          mentorId,
-          id: availabilityId,
-          isActive: true,
-          updatedAt: new Date().toISOString()
-        })
+      if (!convexSlot?._id) {
+        throw new Error('Availability slot not found')
+      }
+
+      // Get current data for notifications
+      const currentAvailability = convexSlot
+
+      await updateSlotMutation({
+        id: convexSlot._id,
+        dayOfWeek: availabilityData.dayOfWeek,
+        startTime: availabilityData.startTime,
+        endTime: availabilityData.endTime,
+        isRecurring: availabilityData.isRecurring ?? true,
+        specificDate: availabilityData.specificDate,
+        isActive: true,
       })
-      
-      if (response.ok) {
-        // Send notifications to students about the availability update
-        if (session?.user) {
-          try {
-            await NotificationService.notifyAvailabilityUpdated(
-              session.user.id,
-              session.user.name || 'Mentor',
-              activeSchedule.id.toString(),
-              activeSchedule.title,
-              {
-                dayOfWeek: currentAvailability.dayOfWeek,
-                startTime: currentAvailability.startTime,
-                endTime: currentAvailability.endTime
-              },
-              {
-                dayOfWeek: availabilityData.dayOfWeek,
-                startTime: availabilityData.startTime,
-                endTime: availabilityData.endTime
-              }
-            )
-            console.log('Availability update notifications sent to students')
-          } catch (notificationError) {
-            console.warn('Failed to send availability update notifications:', notificationError)
-          }
-        }
 
-        await fetchAvailabilities(activeSchedule.id)
+      // Send notifications to students about the availability update
+      if (session?.user) {
+        try {
+          await NotificationService.notifyAvailabilityUpdated(
+            session.user.id,
+            session.user.name || 'Mentor',
+            activeSchedule.id.toString(),
+            activeSchedule.title,
+            {
+              dayOfWeek: currentAvailability.dayOfWeek,
+              startTime: currentAvailability.startTime,
+              endTime: currentAvailability.endTime
+            },
+            {
+              dayOfWeek: availabilityData.dayOfWeek,
+              startTime: availabilityData.startTime,
+              endTime: availabilityData.endTime
+            }
+          )
+          console.log('Availability update notifications sent to students')
+        } catch (notificationError) {
+          console.warn('Failed to send availability update notifications:', notificationError)
+        }
       }
     } catch (error) {
       console.error('Error updating availability:', error)
@@ -373,38 +396,40 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
 
   const deleteAvailability = async (availabilityId: number) => {
     if (!activeSchedule?.id) return
-    
+
     try {
-      // Get availability data before deletion for notifications
-      const availabilityResponse = await fetch(`http://localhost:3001/mentor_availability/${availabilityId}`)
-      const availabilityData = await availabilityResponse.json()
+      // Find the Convex slot ID from availabilityId
+      const convexSlot = convexSlots?.find(s =>
+        MentorScheduleService.convexIdToLegacyId(s._id) === availabilityId
+      )
 
-      const response = await fetch(`http://localhost:3001/mentor_availability/${availabilityId}`, {
-        method: 'DELETE'
-      })
-      
-      if (response.ok) {
-        // Send notifications to students about the availability deletion
-        if (session?.user && availabilityData) {
-          try {
-            await NotificationService.notifyAvailabilityDeleted(
-              session.user.id,
-              session.user.name || 'Mentor',
-              activeSchedule.id.toString(),
-              activeSchedule.title,
-              {
-                dayOfWeek: availabilityData.dayOfWeek,
-                startTime: availabilityData.startTime,
-                endTime: availabilityData.endTime
-              }
-            )
-            console.log('Availability deletion notifications sent to students')
-          } catch (notificationError) {
-            console.warn('Failed to send availability deletion notifications:', notificationError)
-          }
+      if (!convexSlot?._id) {
+        throw new Error('Availability slot not found')
+      }
+
+      // Get data for notifications
+      const availabilityData = convexSlot
+
+      await deleteSlotMutation({ id: convexSlot._id })
+
+      // Send notifications to students about the availability deletion
+      if (session?.user && availabilityData) {
+        try {
+          await NotificationService.notifyAvailabilityDeleted(
+            session.user.id,
+            session.user.name || 'Mentor',
+            activeSchedule.id.toString(),
+            activeSchedule.title,
+            {
+              dayOfWeek: availabilityData.dayOfWeek,
+              startTime: availabilityData.startTime,
+              endTime: availabilityData.endTime
+            }
+          )
+          console.log('Availability deletion notifications sent to students')
+        } catch (notificationError) {
+          console.warn('Failed to send availability deletion notifications:', notificationError)
         }
-
-        await fetchAvailabilities(activeSchedule.id)
       }
     } catch (error) {
       console.error('Error deleting availability:', error)
@@ -413,19 +438,19 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
 
   const toggleScheduleActive = async (schedule: MentorSchedule) => {
     try {
-      const response = await fetch(`http://localhost:3001/mentor_schedules/${schedule.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          ...schedule,
-          isActive: !schedule.isActive,
-          updatedAt: new Date().toISOString()
-        })
-      })
-      
-      if (response.ok) {
-        await fetchSchedules()
+      // Find the Convex schedule ID from schedule.id
+      const convexSchedule = convexSchedules?.find(s =>
+        MentorScheduleService.convexIdToLegacyId(s._id) === schedule.id
+      )
+
+      if (!convexSchedule?._id) {
+        throw new Error('Schedule not found')
       }
+
+      await updateScheduleMutation({
+        id: convexSchedule._id,
+        isActive: !schedule.isActive,
+      })
     } catch (error) {
       console.error('Error updating schedule:', error)
     }
@@ -497,8 +522,7 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
           const schedule = schedules.find(s => s.id?.toString() === value)
           if (schedule) {
             setActiveSchedule(schedule)
-            fetchAvailabilities(schedule.id!)
-            fetchBookings()
+            // Data will sync automatically via Convex hooks
           }
         }}>
           <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${schedules.length}, 1fr)` }}>

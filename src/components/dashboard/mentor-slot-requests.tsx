@@ -8,12 +8,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { 
-  MessageSquare, 
-  Clock, 
-  User, 
-  CheckCircle, 
-  XCircle, 
+import {
+  MessageSquare,
+  Clock,
+  User,
+  CheckCircle,
+  XCircle,
   Calendar,
   AlertTriangle,
   Filter,
@@ -23,12 +23,21 @@ import { motion } from "framer-motion"
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { SlotRequestService, SlotRequest } from '@/lib/slot-request-service'
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '../../../convex/_generated/api'
+import { MentorScheduleService } from '@/services/mentor-schedule-service'
 
 interface MentorSlotRequestsProps {
   mentorId: number
 }
 
 export default function MentorSlotRequests({ mentorId }: MentorSlotRequestsProps) {
+  // Convex queries - real-time data
+  const convexRequests = useQuery(api.slotRequests.getByMentor, { mentorId: String(mentorId) })
+
+  // Convex mutations
+  const updateRequestStatusMutation = useMutation(api.slotRequests.updateStatus)
+
   const [requests, setRequests] = useState<SlotRequest[]>([])
   const [filteredRequests, setFilteredRequests] = useState<SlotRequest[]>([])
   const [loading, setLoading] = useState(true)
@@ -38,7 +47,7 @@ export default function MentorSlotRequests({ mentorId }: MentorSlotRequestsProps
   const [responseMessage, setResponseMessage] = useState('')
   const [responding, setResponding] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  
+
   // Stats
   const [stats, setStats] = useState({
     pending: 0,
@@ -47,25 +56,22 @@ export default function MentorSlotRequests({ mentorId }: MentorSlotRequestsProps
     total: 0
   })
 
+  // Sync Convex data to local state
   useEffect(() => {
-    fetchRequests()
-  }, [mentorId])
+    if (!convexRequests) {
+      setLoading(true)
+      return
+    }
+
+    const requestsData = MentorScheduleService.addLegacyFieldsToArray(convexRequests)
+    setRequests(requestsData as any)
+    setLoading(false)
+  }, [convexRequests])
 
   useEffect(() => {
     filterRequests()
     calculateStats()
   }, [requests, statusFilter])
-
-  const fetchRequests = async () => {
-    try {
-      const data = await SlotRequestService.getMentorSlotRequests(mentorId)
-      setRequests(data)
-    } catch (error) {
-      console.error('Error fetching slot requests:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const filterRequests = () => {
     let filtered = requests
@@ -102,23 +108,31 @@ export default function MentorSlotRequests({ mentorId }: MentorSlotRequestsProps
 
     setResponding(true)
     try {
-      await SlotRequestService.updateSlotRequestStatus(
-        selectedRequest.id,
-        responseAction,
-        responseMessage
+      // Find the Convex request ID from selectedRequest.id
+      const convexRequest = convexRequests?.find(r =>
+        MentorScheduleService.convexIdToLegacyId(r._id) === selectedRequest.id
       )
 
+      if (!convexRequest?._id) {
+        throw new Error('Slot request not found')
+      }
+
+      await updateRequestStatusMutation({
+        id: convexRequest._id,
+        status: responseAction === 'approve' ? 'approved' : 'rejected',
+        responseMessage: responseMessage || undefined,
+      })
+
       // If approved, create availability slot
-      if (responseAction === 'approved') {
+      if (responseAction === 'approve') {
         await SlotRequestService.createAvailabilityFromRequest(selectedRequest)
       }
 
-      await fetchRequests()
       setShowResponseDialog(false)
       setSelectedRequest(null)
       setResponseMessage('')
-      
-      const actionText = responseAction === 'approved' ? 'approved' : 'rejected'
+
+      const actionText = responseAction === 'approve' ? 'approved' : 'rejected'
       alert(`Slot request ${actionText} successfully!`)
     } catch (error) {
       console.error('Error responding to slot request:', error)
