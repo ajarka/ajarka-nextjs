@@ -24,6 +24,7 @@ import type * as comments from "../comments.js";
 import type * as courses from "../courses.js";
 import type * as createAdminWithKnownPassword from "../createAdminWithKnownPassword.js";
 import type * as discountRules from "../discountRules.js";
+import type * as eventTemplates from "../eventTemplates.js";
 import type * as http from "../http.js";
 import type * as learningMaterials from "../learningMaterials.js";
 import type * as mentorSchedules from "../mentorSchedules.js";
@@ -59,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   courses: typeof courses;
   createAdminWithKnownPassword: typeof createAdminWithKnownPassword;
   discountRules: typeof discountRules;
+  eventTemplates: typeof eventTemplates;
   http: typeof http;
   learningMaterials: typeof learningMaterials;
   mentorSchedules: typeof mentorSchedules;

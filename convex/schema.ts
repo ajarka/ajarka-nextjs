@@ -626,4 +626,21 @@ export default defineSchema({
   .index("by_mentor", ["mentorId"])
   .index("by_status", ["status"])
   .index("by_date", ["requestedDate"]),
+
+  // Event Templates table
+  eventTemplates: defineTable({
+    title: v.string(),
+    description: v.string(),
+    category: v.string(),
+    duration: v.number(), // in minutes
+    maxParticipants: v.number(),
+    isOnline: v.boolean(),
+    materials: v.array(v.string()),
+    requirements: v.array(v.string()),
+    isActive: v.boolean(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  })
+  .index("by_category", ["category"])
+  .index("by_active", ["isActive"]),
 });

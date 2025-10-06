@@ -81,6 +81,21 @@ export interface AdminSettings {
   createdAt: string;
 }
 
+export interface EventTemplate {
+  _id: Id<"eventTemplates">;
+  title: string;
+  description: string;
+  category: string;
+  duration: number;
+  maxParticipants: number;
+  isOnline: boolean;
+  materials: string[];
+  requirements: string[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 class AdminService extends BaseService {
   // Static methods for non-React usage
   static async getPricingRules(): Promise<AdminPricingRule[]> {
@@ -122,12 +137,9 @@ class AdminService extends BaseService {
     }).format(amount)
   }
 
-  static async getAllEventTemplates(): Promise<any[]> {
+  static async getAllEventTemplates(): Promise<EventTemplate[]> {
     try {
-      // TODO: Implement when event template Convex functions are created
-      // For now, return empty array to prevent errors
-      console.log('📝 getAllEventTemplates - returning empty array (not implemented yet)')
-      return []
+      return await this.query("eventTemplates:getAll") || []
     } catch (error) {
       console.error('Error fetching event templates:', error)
       return []
@@ -506,6 +518,35 @@ class AdminService extends BaseService {
         repeatBookingRate: 0
       }
     }
+  }
+
+  // Event Templates - Static methods
+  static useEventTemplates() {
+    return this.useQuery<EventTemplate[]>('eventTemplates.getAll', {});
+  }
+
+  static useActiveEventTemplates() {
+    return this.useQuery<EventTemplate[]>('eventTemplates.getActive', {});
+  }
+
+  static useEventTemplatesByCategory(category: string) {
+    return this.useQuery<EventTemplate[]>('eventTemplates.getByCategory', { category });
+  }
+
+  static useCreateEventTemplate() {
+    return this.useMutation<Id<"eventTemplates">>('eventTemplates.create');
+  }
+
+  static useUpdateEventTemplate() {
+    return this.useMutation<Id<"eventTemplates">>('eventTemplates.update');
+  }
+
+  static useDeleteEventTemplate() {
+    return this.useMutation<void>('eventTemplates.remove');
+  }
+
+  static useToggleEventTemplateActive() {
+    return this.useMutation<Id<"eventTemplates">>('eventTemplates.toggleActive');
   }
 
   // System Settings Management - Static methods

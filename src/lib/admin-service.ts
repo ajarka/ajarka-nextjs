@@ -9,7 +9,8 @@ export type {
   AdminPricingRule,
   OfficeLocation as AdminOfficeLocation,
   DiscountRule,
-  AdminSettings
+  AdminSettings,
+  EventTemplate
 } from '../services/admin-service';
 
 // Legacy interface mapping for existing components
@@ -63,15 +64,21 @@ export class LegacyAdminService {
     return adminService.deleteOfficeLocation(id as any);
   }
 
-  // Event Templates Management (placeholder - would need separate service)
+  // Event Templates Management
   static async getEventTemplates() {
-    // This would need a separate event template service
-    return [];
+    return adminService.constructor.getAllEventTemplates();
   }
 
   static async createEventTemplate(template: any) {
-    // This would need a separate event template service
-    return null;
+    return adminService.constructor.createEventTemplate(template);
+  }
+
+  static async updateEventTemplate(id: string, updates: any) {
+    return adminService.constructor.updateEventTemplate(id as any, updates);
+  }
+
+  static async deleteEventTemplate(id: string) {
+    return adminService.constructor.deleteEventTemplate(id as any);
   }
 
   // Pricing Calculation Utilities

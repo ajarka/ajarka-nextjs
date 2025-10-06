@@ -1,14 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { 
+import {
   MapPin,
   Plus,
   Edit,
@@ -22,7 +21,8 @@ import {
   AlertTriangle,
   CheckCircle
 } from "lucide-react"
-import { AdminService, AdminOfficeLocation } from '@/lib/admin-service'
+import { AdminService, OfficeLocation } from '@/services/admin-service'
+import { Id } from '../../convex/_generated/dataModel'
 
 const FACILITY_OPTIONS = [
   { id: 'wifi', label: 'WiFi', icon: Wifi },
@@ -34,55 +34,83 @@ const FACILITY_OPTIONS = [
 ]
 
 export default function LocationManagement() {
-  const [locations, setLocations] = useState<AdminOfficeLocation[]>([])
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  // Use Convex hooks - static methods
+  const locations = AdminService.useOfficeLocations() || []
+  const createLocation = AdminService.useCreateOfficeLocation()
+  const updateLocation = AdminService.useUpdateOfficeLocation()
+  const deleteLocation = AdminService.useDeleteOfficeLocation()
+
   const [showDialog, setShowDialog] = useState(false)
-  const [editingLocation, setEditingLocation] = useState<AdminOfficeLocation | null>(null)
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [editingLocation, setEditingLocation] = useState<OfficeLocation | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<Id<"adminOfficeLocations"> | null>(null)
 
   const [formData, setFormData] = useState({
     name: '',
     address: '',
     city: '',
-    capacity: 10,
+    province: '',
+    postalCode: '',
+    coordinates: {
+      latitude: 0,
+      longitude: 0,
+    },
     facilities: [] as string[],
-    isActive: true
+    capacity: 10,
+    operatingHours: {
+      weekdays: '09:00 - 17:00',
+      weekends: '09:00 - 15:00',
+    },
+    contactPerson: '',
+    contactPhone: '',
+    isActive: true,
+    photos: [] as string[],
+    amenities: [] as string[],
   })
-
-  const fetchLocations = async () => {
-    setLoading(true)
-    const data = await AdminService.getOfficeLocations()
-    setLocations(data)
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    fetchLocations()
-  }, [])
 
   const resetForm = () => {
     setFormData({
       name: '',
       address: '',
       city: '',
-      capacity: 10,
+      province: '',
+      postalCode: '',
+      coordinates: {
+        latitude: 0,
+        longitude: 0,
+      },
       facilities: [],
-      isActive: true
+      capacity: 10,
+      operatingHours: {
+        weekdays: '09:00 - 17:00',
+        weekends: '09:00 - 15:00',
+      },
+      contactPerson: '',
+      contactPhone: '',
+      isActive: true,
+      photos: [],
+      amenities: [],
     })
     setEditingLocation(null)
   }
 
-  const openDialog = (location?: AdminOfficeLocation) => {
+  const openDialog = (location?: OfficeLocation) => {
     if (location) {
       setEditingLocation(location)
       setFormData({
         name: location.name,
         address: location.address,
         city: location.city,
-        capacity: location.capacity,
+        province: location.province,
+        postalCode: location.postalCode,
+        coordinates: location.coordinates,
         facilities: location.facilities,
-        isActive: location.isActive
+        capacity: location.capacity,
+        operatingHours: location.operatingHours,
+        contactPerson: location.contactPerson,
+        contactPhone: location.contactPhone,
+        isActive: location.isActive,
+        photos: location.photos || [],
+        amenities: location.amenities || [],
       })
     } else {
       resetForm()
@@ -91,33 +119,30 @@ export default function LocationManagement() {
   }
 
   const handleSave = async () => {
-    setSaving(true)
     try {
       if (editingLocation) {
-        await AdminService.updateOfficeLocation(editingLocation.id, formData)
+        await updateLocation({
+          id: editingLocation._id,
+          ...formData,
+        })
       } else {
-        await AdminService.createOfficeLocation(formData)
+        await createLocation(formData)
       }
-      await fetchLocations()
       setShowDialog(false)
       resetForm()
     } catch (error) {
       console.error('Error saving location:', error)
-    } finally {
-      setSaving(false)
+      alert('Failed to save location. Please try again.')
     }
   }
 
-  const handleDelete = async (id: string) => {
-    setSaving(true)
+  const handleDelete = async (id: Id<"adminOfficeLocations">) => {
     try {
-      await AdminService.deleteOfficeLocation(id)
-      await fetchLocations()
+      await deleteLocation({ id })
       setDeleteConfirm(null)
     } catch (error) {
       console.error('Error deleting location:', error)
-    } finally {
-      setSaving(false)
+      alert('Failed to delete location. Please try again.')
     }
   }
 
@@ -130,12 +155,7 @@ export default function LocationManagement() {
     }))
   }
 
-  const getFacilityIcon = (facilityId: string) => {
-    const facility = FACILITY_OPTIONS.find(f => f.id === facilityId)
-    return facility ? facility.icon : Building
-  }
-
-  if (loading) {
+  if (locations === undefined) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center p-8">
@@ -150,18 +170,18 @@ export default function LocationManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Office Location Management</h2>
+          <h2 className="text-2xl font-bold">Location Management</h2>
           <p className="text-muted-foreground">
-            Kelola lokasi kantor Ajarka untuk sesi offline
+            Kelola lokasi kantor untuk sesi offline
           </p>
         </div>
         <Button onClick={() => openDialog()} className="gap-2">
           <Plus className="h-4 w-4" />
-          Add Location
+          Add New Location
         </Button>
       </div>
 
-      {/* Statistics */}
+      {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -183,10 +203,10 @@ export default function LocationManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {locations.filter(l => l.isActive).reduce((sum, loc) => sum + loc.capacity, 0)}
+              {locations.reduce((sum, loc) => sum + loc.capacity, 0)}
             </div>
             <p className="text-xs text-muted-foreground">
-              people across all locations
+              total seats
             </p>
           </CardContent>
         </Card>
@@ -213,12 +233,10 @@ export default function LocationManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {Math.round(
-                locations.reduce((sum, loc) => sum + loc.capacity, 0) / Math.max(locations.length, 1)
-              )}
+              {Math.round(locations.reduce((sum, loc) => sum + loc.capacity, 0) / Math.max(locations.length, 1))}
             </div>
             <p className="text-xs text-muted-foreground">
-              people per location
+              seats per location
             </p>
           </CardContent>
         </Card>
@@ -229,168 +247,234 @@ export default function LocationManagement() {
         <CardHeader>
           <CardTitle>Office Locations</CardTitle>
           <CardDescription>
-            Lokasi kantor yang tersedia untuk sesi mentoring offline
+            Daftar lokasi kantor yang tersedia untuk sesi mentoring offline
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {locations.length === 0 ? (
-            <div className="text-center py-8">
-              <Building className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Locations</h3>
-              <p className="text-muted-foreground mb-4">
-                Add your first office location for offline mentoring sessions
-              </p>
-              <Button onClick={() => openDialog()}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add First Location
-              </Button>
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {locations.map((location) => (
-                <Card key={location.id} className="relative">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h4 className="font-semibold flex items-center gap-2">
-                          <Building className="h-4 w-4" />
-                          {location.name}
-                        </h4>
-                        <p className="text-sm text-muted-foreground">{location.city}</p>
-                      </div>
-                      <Badge variant={location.isActive ? 'default' : 'secondary'}>
-                        {location.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </div>
-
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <p className="text-sm">{location.address}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <p className="text-sm">Capacity: {location.capacity} people</p>
-                      </div>
-                    </div>
-
-                    {/* Facilities */}
-                    <div className="mb-4">
-                      <p className="text-sm font-medium mb-2">Facilities:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {location.facilities.map((facilityId) => {
-                          const facility = FACILITY_OPTIONS.find(f => f.id === facilityId)
-                          const FacilityIcon = getFacilityIcon(facilityId)
-                          return (
-                            <Badge key={facilityId} variant="outline" className="text-xs">
-                              <FacilityIcon className="h-3 w-3 mr-1" />
-                              {facility?.label || facilityId}
+          <div className="space-y-4">
+            {locations.length === 0 ? (
+              <div className="text-center py-8">
+                <Building className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Locations</h3>
+                <p className="text-muted-foreground mb-4">
+                  Add your first office location to enable offline sessions
+                </p>
+                <Button onClick={() => openDialog()}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add First Location
+                </Button>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {locations.map((location) => (
+                  <Card key={location._id} className="relative">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="font-semibold">{location.name}</h4>
+                            <Badge variant={location.isActive ? 'default' : 'secondary'}>
+                              {location.isActive ? <><CheckCircle className="h-3 w-3 mr-1" />Active</> : 'Inactive'}
                             </Badge>
-                          )
-                        })}
-                        {location.facilities.length === 0 && (
-                          <span className="text-xs text-muted-foreground">No facilities listed</span>
-                        )}
-                      </div>
-                    </div>
+                          </div>
 
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openDialog(location)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setDeleteConfirm(location.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+                          <div className="space-y-2 text-sm">
+                            <div className="flex items-start gap-2">
+                              <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                              <div>
+                                <p>{location.address}</p>
+                                <p className="text-muted-foreground">{location.city}, {location.province}</p>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <span className="text-muted-foreground">Capacity:</span>
+                                <p className="font-medium">{location.capacity} seats</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Contact:</span>
+                                <p className="font-medium">{location.contactPerson}</p>
+                              </div>
+                            </div>
+
+                            {location.facilities.length > 0 && (
+                              <div>
+                                <span className="text-muted-foreground">Facilities:</span>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {location.facilities.map((facilityId) => {
+                                    const facility = FACILITY_OPTIONS.find(f => f.id === facilityId)
+                                    return facility ? (
+                                      <Badge key={facilityId} variant="outline" className="text-xs">
+                                        {facility.label}
+                                      </Badge>
+                                    ) : null
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button variant="outline" size="sm" onClick={() => openDialog(location)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => setDeleteConfirm(location._id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
       {/* Add/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingLocation ? 'Edit Office Location' : 'Add New Office Location'}
+              {editingLocation ? 'Edit Location' : 'Add New Location'}
             </DialogTitle>
             <DialogDescription>
-              Configure office location details for offline mentoring sessions
+              Provide office location details
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Location Name</Label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  placeholder="Ajarka Office Jakarta"
-                />
-              </div>
-
-              <div>
-                <Label>City</Label>
-                <Input
-                  value={formData.city}
-                  onChange={(e) => setFormData({...formData, city: e.target.value})}
-                  placeholder="Jakarta"
-                />
-              </div>
+            <div>
+              <Label>Location Name</Label>
+              <Input
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                placeholder="Jakarta Office - Sudirman"
+              />
             </div>
 
             <div>
               <Label>Address</Label>
-              <Textarea
+              <Input
                 value={formData.address}
                 onChange={(e) => setFormData({...formData, address: e.target.value})}
-                placeholder="Jl. Sudirman No. 123, Jakarta Pusat 10220"
-                rows={3}
+                placeholder="Full street address"
               />
             </div>
 
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label>City</Label>
+                <Input value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} />
+              </div>
+              <div>
+                <Label>Province</Label>
+                <Input value={formData.province} onChange={(e) => setFormData({...formData, province: e.target.value})} />
+              </div>
+              <div>
+                <Label>Postal Code</Label>
+                <Input value={formData.postalCode} onChange={(e) => setFormData({...formData, postalCode: e.target.value})} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Latitude</Label>
+                <Input
+                  type="number"
+                  step="0.000001"
+                  value={formData.coordinates.latitude}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    coordinates: { ...formData.coordinates, latitude: parseFloat(e.target.value) || 0 }
+                  })}
+                />
+              </div>
+              <div>
+                <Label>Longitude</Label>
+                <Input
+                  type="number"
+                  step="0.000001"
+                  value={formData.coordinates.longitude}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    coordinates: { ...formData.coordinates, longitude: parseFloat(e.target.value) || 0 }
+                  })}
+                />
+              </div>
+            </div>
+
             <div>
-              <Label>Capacity (people)</Label>
+              <Label>Capacity</Label>
               <Input
                 type="number"
-                min="1"
-                max="100"
                 value={formData.capacity}
-                onChange={(e) => setFormData({...formData, capacity: parseInt(e.target.value)})}
+                onChange={(e) => setFormData({...formData, capacity: parseInt(e.target.value) || 0})}
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Weekday Hours</Label>
+                <Input
+                  value={formData.operatingHours.weekdays}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    operatingHours: { ...formData.operatingHours, weekdays: e.target.value }
+                  })}
+                />
+              </div>
+              <div>
+                <Label>Weekend Hours</Label>
+                <Input
+                  value={formData.operatingHours.weekends}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    operatingHours: { ...formData.operatingHours, weekends: e.target.value }
+                  })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Contact Person</Label>
+                <Input
+                  value={formData.contactPerson}
+                  onChange={(e) => setFormData({...formData, contactPerson: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label>Contact Phone</Label>
+                <Input
+                  value={formData.contactPhone}
+                  onChange={(e) => setFormData({...formData, contactPhone: e.target.value})}
+                />
+              </div>
+            </div>
+
             <div>
-              <Label className="mb-3 block">Facilities</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              <Label className="mb-2 block">Facilities</Label>
+              <div className="grid grid-cols-3 gap-2">
                 {FACILITY_OPTIONS.map((facility) => {
                   const Icon = facility.icon
-                  const isSelected = formData.facilities.includes(facility.id)
-                  
                   return (
-                    <Button
+                    <button
                       key={facility.id}
                       type="button"
-                      variant={isSelected ? "default" : "outline"}
-                      size="sm"
                       onClick={() => toggleFacility(facility.id)}
-                      className="justify-start gap-2"
+                      className={`flex items-center gap-2 p-2 border rounded-md transition-colors ${
+                        formData.facilities.includes(facility.id)
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-accent'
+                      }`}
                     >
                       <Icon className="h-4 w-4" />
-                      {facility.label}
-                    </Button>
+                      <span className="text-sm">{facility.label}</span>
+                    </button>
                   )
                 })}
               </div>
@@ -399,20 +483,20 @@ export default function LocationManagement() {
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
-                id="isActiveLocation"
+                id="isActive"
                 checked={formData.isActive}
                 onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
               />
-              <Label htmlFor="isActiveLocation">Active Location</Label>
+              <Label htmlFor="isActive">Active Location</Label>
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>
+            <Button variant="outline" onClick={() => { setShowDialog(false); resetForm(); }}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving || !formData.name || !formData.address}>
-              {saving ? 'Saving...' : editingLocation ? 'Update Location' : 'Create Location'}
+            <Button onClick={handleSave}>
+              {editingLocation ? 'Update' : 'Create'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -427,19 +511,13 @@ export default function LocationManagement() {
               Confirm Deletion
             </DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this office location? This action cannot be undone and may affect existing offline sessions.
+              Are you sure you want to delete this location?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
-              Cancel
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
-              disabled={saving}
-            >
-              {saving ? 'Deleting...' : 'Delete Location'}
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)}>
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>

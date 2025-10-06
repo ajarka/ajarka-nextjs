@@ -239,36 +239,43 @@ export default function MentorScheduleDialog({
                   </div>
                   
                   <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg min-h-[60px]">
-                    {adminPricingRules.map((rule) => 
-                      rule.materials.map((material: string) => {
-                        const isSelected = newSchedule.materials.includes(material)
-                        return (
-                          <button
-                            key={material}
-                            type="button"
-                            onClick={() => {
-                              if (isSelected) {
-                                setNewSchedule({
-                                  ...newSchedule,
-                                  materials: newSchedule.materials.filter((m: string) => m !== material)
-                                })
-                              } else {
-                                setNewSchedule({
-                                  ...newSchedule,
-                                  materials: [...newSchedule.materials, material]
-                                })
-                              }
-                            }}
-                            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                              isSelected
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
-                          >
-                            {material}
-                          </button>
-                        )
-                      })
+                    {adminPricingRules.length > 0 ? (
+                      adminPricingRules.flatMap((rule) =>
+                        (rule.materials || []).map((material: string) => {
+                          const isSelected = newSchedule.materials?.includes(material) || false
+                          return (
+                            <button
+                              key={`${rule._id}-${material}`}
+                              type="button"
+                              onClick={() => {
+                                const currentMaterials = newSchedule.materials || []
+                                if (isSelected) {
+                                  setNewSchedule({
+                                    ...newSchedule,
+                                    materials: currentMaterials.filter((m: string) => m !== material)
+                                  })
+                                } else {
+                                  setNewSchedule({
+                                    ...newSchedule,
+                                    materials: [...currentMaterials, material]
+                                  })
+                                }
+                              }}
+                              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                                isSelected
+                                  ? 'bg-blue-500 text-white'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            >
+                              {material}
+                            </button>
+                          )
+                        })
+                      )
+                    ) : (
+                      <div className="text-center w-full py-4 text-gray-500 text-sm">
+                        No materials available. Please add pricing rules from admin panel.
+                      </div>
                     )}
                   </div>
                 </div>
