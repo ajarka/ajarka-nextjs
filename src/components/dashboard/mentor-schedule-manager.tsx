@@ -96,6 +96,7 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
   // Convex queries
   const convexSchedules = useQuery(api.mentorSchedules.getByMentorString, { mentorId: String(mentorId) })
   const convexMaterials = useQuery(api.learningMaterials.getAll, {})
+  const publishedMaterialContents = useQuery(api.materialContents.getPublished, {})
   const convexSlots = useQuery(api.availabilitySlots.getByMentor, { mentorId: String(mentorId) })
   const convexBookings = useQuery(api.bookings.getByMentor, { mentorId: String(mentorId) })
 
@@ -166,11 +167,34 @@ export default function MentorScheduleManager({ mentorId }: { mentorId: number }
   }, [convexSchedules])
 
   useEffect(() => {
+    // Combine old learning materials and new published material contents
+    const combinedMaterials: LearningMaterial[] = []
+
+    // Add legacy learning materials if available
     if (convexMaterials) {
       const materialsWithLegacyId = MentorScheduleService.addLegacyFieldsToArray(convexMaterials)
-      setAvailableMaterials(materialsWithLegacyId.filter((m: any) => m.isActive) as any)
+      combinedMaterials.push(...materialsWithLegacyId.filter((m: any) => m.isActive) as any)
     }
-  }, [convexMaterials])
+
+    // Add new published material contents (converted to LearningMaterial format)
+    if (publishedMaterialContents) {
+      const convertedMaterials = publishedMaterialContents.map((mc: any) => ({
+        id: mc._id,
+        title: mc.title,
+        description: mc.description,
+        category: mc.category,
+        level: mc.level,
+        difficulty: mc.difficulty,
+        estimatedHours: mc.estimatedHours,
+        prerequisites: mc.prerequisites || [],
+        isActive: mc.isActive && mc.status === 'published',
+        tags: mc.tags || []
+      }))
+      combinedMaterials.push(...convertedMaterials as any)
+    }
+
+    setAvailableMaterials(combinedMaterials)
+  }, [convexMaterials, publishedMaterialContents])
 
   useEffect(() => {
     if (convexSlots) {

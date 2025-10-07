@@ -25,7 +25,8 @@
       "Bash(npm run build:*)",
       "Bash(timeout 30 npm run build:*)",
       "Bash(npx shadcn:*)",
-      "Bash(npx shadcn@latest add:*)"
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(timeout 10 bash -c 'until curl -s http://localhost:3000 > /dev/null 2>&1 || curl -s http://localhost:3003 > /dev/null 2>&1; do sleep 1; done && echo \"\"Server is ready\"\"')"
     ],
     "deny": [],
     "ask": []

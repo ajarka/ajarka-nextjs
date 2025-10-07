@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { 
+import {
   Settings,
   DollarSign,
   MapPin,
@@ -14,13 +14,15 @@ import {
   Building,
   Monitor,
   Globe,
-  AlertTriangle
+  AlertTriangle,
+  BookOpen
 } from "lucide-react"
 import PricingManagement from './pricing-management'
 import LocationManagement from './location-management'
 import EventManagement from './event-management'
 import BundleManagement from './bundle-management'
 import SubscriptionTracking from './subscription-tracking'
+import MaterialsManagement from './materials-management'
 import { AdminService, AdminPricingRule, AdminOfficeLocation } from '@/lib/admin-service'
 
 export default function AdminDashboard() {
@@ -232,22 +234,26 @@ export default function AdminDashboard() {
 
       {/* Management Tabs */}
       <Tabs defaultValue="pricing" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="pricing" className="flex items-center gap-2">
             <DollarSign className="h-4 w-4" />
-            Pricing Management
+            Pricing
           </TabsTrigger>
           <TabsTrigger value="locations" className="flex items-center gap-2">
             <MapPin className="h-4 w-4" />
-            Location Management
+            Locations
+          </TabsTrigger>
+          <TabsTrigger value="materials" className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            Materials
           </TabsTrigger>
           <TabsTrigger value="events" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
-            Event Management
+            Events
           </TabsTrigger>
           <TabsTrigger value="bundles" className="flex items-center gap-2">
             <Building className="h-4 w-4" />
-            Bundle Management
+            Bundles
           </TabsTrigger>
           <TabsTrigger value="subscriptions" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
@@ -261,6 +267,10 @@ export default function AdminDashboard() {
 
         <TabsContent value="locations">
           <LocationManagement />
+        </TabsContent>
+
+        <TabsContent value="materials">
+          <MaterialsManagement />
         </TabsContent>
 
         <TabsContent value="events">

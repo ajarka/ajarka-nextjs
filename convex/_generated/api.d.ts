@@ -27,6 +27,7 @@ import type * as discountRules from "../discountRules.js";
 import type * as eventTemplates from "../eventTemplates.js";
 import type * as http from "../http.js";
 import type * as learningMaterials from "../learningMaterials.js";
+import type * as materialContents from "../materialContents.js";
 import type * as mentorSchedules from "../mentorSchedules.js";
 import type * as migrations from "../migrations.js";
 import type * as notifications from "../notifications.js";
@@ -63,6 +64,7 @@ declare const fullApi: ApiFromModules<{
   eventTemplates: typeof eventTemplates;
   http: typeof http;
   learningMaterials: typeof learningMaterials;
+  materialContents: typeof materialContents;
   mentorSchedules: typeof mentorSchedules;
   migrations: typeof migrations;
   notifications: typeof notifications;

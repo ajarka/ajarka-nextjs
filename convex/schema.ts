@@ -234,31 +234,25 @@ export default defineSchema({
   .index("by_level", ["level"])
   .index("by_difficulty", ["difficulty"]),
 
-  // Notifications table
+  // Notifications table (unified for all notification types)
   notifications: defineTable({
-    recipientId: v.string(),
-    recipientType: v.union(v.literal("siswa"), v.literal("mentor"), v.literal("admin")),
-    senderId: v.string(),
-    senderType: v.union(v.literal("siswa"), v.literal("mentor"), v.literal("admin")),
-    type: v.union(
-      v.literal("schedule_created"),
-      v.literal("booking_created"),
-      v.literal("booking_confirmed"),
-      v.literal("booking_cancelled"),
-      v.literal("meeting_link_generated"),
-      v.literal("availability_updated"),
-      v.literal("availability_deleted")
-    ),
+    userId: v.string(), // Recipient user ID
+    recipientType: v.optional(v.union(v.literal("siswa"), v.literal("mentor"), v.literal("admin"))),
+    senderId: v.optional(v.string()),
+    senderType: v.optional(v.union(v.literal("siswa"), v.literal("mentor"), v.literal("admin"))),
+    type: v.string(), // "material_review_request", "material_approved", "booking_created", etc
     title: v.string(),
     message: v.string(),
+    relatedId: v.optional(v.string()), // Related entity ID
+    relatedType: v.optional(v.string()), // "material", "booking", "schedule", etc
     data: v.optional(v.any()),
-    read: v.boolean(),
+    isRead: v.boolean(),
     createdAt: v.string(),
-    updatedAt: v.string(),
+    updatedAt: v.optional(v.string()),
   })
-  .index("by_recipient", ["recipientId"])
-  .index("by_type", ["type"])
-  .index("by_read", ["read"]),
+  .index("by_user", ["userId"])
+  .index("by_user_read", ["userId", "isRead"])
+  .index("by_type", ["type"]),
 
   // Discount Rules - rules untuk discount calculation
   discountRules: defineTable({
@@ -643,4 +637,62 @@ export default defineSchema({
   })
   .index("by_category", ["category"])
   .index("by_active", ["isActive"]),
+
+  // Learning Materials Content table
+  materialContents: defineTable({
+    title: v.string(),
+    description: v.string(),
+    category: v.string(), // "programming", "design", "business", etc
+    level: v.number(), // 1-100
+    difficulty: v.string(), // "beginner", "intermediate", "advanced"
+    estimatedHours: v.number(),
+    content: v.string(), // Markdown content
+    videoUrl: v.optional(v.string()),
+    thumbnailUrl: v.optional(v.string()),
+    attachments: v.array(v.object({
+      name: v.string(),
+      url: v.string(),
+      type: v.string(), // "pdf", "image", "video", etc
+    })),
+    tags: v.array(v.string()),
+    prerequisites: v.array(v.string()), // IDs of required materials
+    objectives: v.array(v.string()), // Learning objectives
+
+    // Author information
+    authorId: v.string(), // User ID who created this
+    authorRole: v.string(), // "admin" or "mentor"
+
+    // Review & Status
+    status: v.string(), // "draft", "pending_review", "approved", "rejected", "published"
+    reviewerId: v.optional(v.string()), // Admin who reviewed
+    reviewNotes: v.optional(v.string()),
+    reviewedAt: v.optional(v.string()),
+
+    // Visibility
+    isPublic: v.boolean(), // Available to all mentors
+    isActive: v.boolean(),
+
+    // Timestamps
+    createdAt: v.string(),
+    updatedAt: v.string(),
+    publishedAt: v.optional(v.string()),
+  })
+  .index("by_author", ["authorId"])
+  .index("by_status", ["status"])
+  .index("by_category", ["category"])
+  .index("by_level", ["level"])
+  .index("by_active", ["isActive"])
+  .index("by_public", ["isPublic"])
+  .index("by_author_status", ["authorId", "status"]),
+
+  // Material Reviews table (for tracking review history)
+  materialReviews: defineTable({
+    materialId: v.id("materialContents"),
+    reviewerId: v.string(), // Admin ID
+    action: v.string(), // "submitted", "approved", "rejected", "revision_requested"
+    notes: v.string(),
+    createdAt: v.string(),
+  })
+  .index("by_material", ["materialId"])
+  .index("by_reviewer", ["reviewerId"]),
 });
