@@ -565,6 +565,11 @@ export default defineSchema({
     meetingProvider: v.union(v.literal("zoom"), v.literal("google-meet")),
     locationId: v.optional(v.number()),
     timezone: v.string(),
+    // Pricing fields - calculated from admin pricing rules
+    studentPrice: v.optional(v.number()), // Final price student will pay
+    mentorEarnings: v.optional(v.number()), // Mentor's share
+    platformFee: v.optional(v.number()), // Platform's share
+    pricingCategory: v.optional(v.string()), // Which pricing rule was used
     isActive: v.boolean(),
     createdAt: v.string(),
     updatedAt: v.string(),

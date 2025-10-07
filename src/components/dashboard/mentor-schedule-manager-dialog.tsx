@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,7 +9,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { CheckCircle, Video, Globe, Target, BookOpen } from 'lucide-react'
+import { CheckCircle, Video, Globe, Target, BookOpen, TrendingUp, DollarSign, Users, Info } from 'lucide-react'
+import { AdminService } from '@/services/admin-service'
+import { Card, CardContent } from '@/components/ui/card'
 
 interface MentorScheduleDialogProps {
   isOpen: boolean
@@ -38,6 +40,24 @@ export default function MentorScheduleDialog({
   saving,
   onSubmit
 }: MentorScheduleDialogProps) {
+  // Calculate detailed pricing breakdown
+  const pricingBreakdown = useMemo(() => {
+    const materialsToUse = newSchedule.learningMaterials && newSchedule.learningMaterials.length > 0
+      ? availableMaterials.filter((m: any) => newSchedule.learningMaterials.includes(m._id))
+      : []
+
+    if (adminPricingRules.length === 0 || materialsToUse.length === 0) {
+      return null
+    }
+
+    return AdminService.calculateSessionPriceWithBreakdown(adminPricingRules, {
+      materials: materialsToUse,
+      duration: newSchedule.duration,
+      isOnline: newSchedule.meetingType === 'online',
+      sessionType: 'mentoring'
+    })
+  }, [newSchedule, availableMaterials, adminPricingRules])
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl w-[95vw] sm:!max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
@@ -446,23 +466,100 @@ export default function MentorScheduleDialog({
                   </div>
                 )}
 
-                {/* Pricing Display */}
-                {calculatedPrice > 0 && (
-                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-green-800 mb-2">Your Earnings per Session</h4>
-                        <div className="text-center p-3 bg-white rounded-lg">
-                          <div className="text-3xl font-bold text-green-600 mb-1">
-                            Rp {mentorFee.toLocaleString('id-ID')}
-                          </div>
-                          <p className="text-xs text-green-700">
-                            Dihitung otomatis oleh admin (70% dari harga siswa)
-                          </p>
+                {/* Pricing Breakdown */}
+                {pricingBreakdown && (
+                  <div className="space-y-4">
+                    {/* Info Banner */}
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <div className="text-xs text-blue-800">
+                          <strong>Pricing otomatis dihitung oleh sistem</strong> berdasarkan admin pricing rules. Harga tidak bisa diubah dan sudah termasuk level materi, durasi, dan tipe meeting.
                         </div>
                       </div>
                     </div>
+
+                    {/* Pricing Breakdown Card */}
+                    <Card className="border-2 border-primary/20">
+                      <CardContent className="p-4 space-y-4">
+                        <div className="flex items-center justify-between pb-2 border-b">
+                          <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                            <DollarSign className="h-5 w-5 text-primary" />
+                            Pricing Breakdown
+                          </h4>
+                          <Badge variant="secondary">{pricingBreakdown.category}</Badge>
+                        </div>
+
+                        {/* Base Price */}
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">Base Price</span>
+                            <span className="font-medium">
+                              {pricingBreakdown.basePrice.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+                            </span>
+                          </div>
+
+                          {/* Level Adjustment */}
+                          {pricingBreakdown.levelBonus > 0 && (
+                            <div className="flex justify-between items-center text-blue-600">
+                              <span className="flex items-center gap-1">
+                                <TrendingUp className="h-3 w-3" />
+                                Level {pricingBreakdown.maxLevel} Bonus (+{Math.round((pricingBreakdown.levelMultiplier - 1) * 100)}%)
+                              </span>
+                              <span className="font-medium">
+                                +{pricingBreakdown.levelBonus.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Duration Adjustment */}
+                          <div className="flex justify-between items-center text-gray-600">
+                            <span>Duration ({newSchedule.duration} min × {pricingBreakdown.durationMultiplier}x)</span>
+                            <span className="text-xs text-gray-500">Applied</span>
+                          </div>
+
+                          {/* Location Adjustment */}
+                          {pricingBreakdown.locationBonus > 0 && (
+                            <div className="flex justify-between items-center text-orange-600">
+                              <span className="flex items-center gap-1">
+                                <Globe className="h-3 w-3" />
+                                Offline Meeting (+20%)
+                              </span>
+                              <span className="font-medium">
+                                +{pricingBreakdown.locationBonus.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Total for Student */}
+                          <div className="flex justify-between items-center pt-2 border-t font-semibold text-base">
+                            <span className="flex items-center gap-1">
+                              <Users className="h-4 w-4 text-purple-600" />
+                              Student Will Pay
+                            </span>
+                            <span className="text-purple-600">
+                              {pricingBreakdown.finalPrice.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Distribution */}
+                        <div className="grid grid-cols-2 gap-3 pt-3 border-t">
+                          <div className="p-3 bg-green-50 rounded-lg">
+                            <div className="text-xs text-green-700 mb-1">Your Earnings ({pricingBreakdown.mentorShare}%)</div>
+                            <div className="text-lg font-bold text-green-600">
+                              {pricingBreakdown.mentorEarnings.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+                            </div>
+                          </div>
+                          <div className="p-3 bg-gray-50 rounded-lg">
+                            <div className="text-xs text-gray-600 mb-1">Platform Fee ({pricingBreakdown.platformFee}%)</div>
+                            <div className="text-lg font-bold text-gray-600">
+                              {pricingBreakdown.platformEarnings.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 )}
               </TabsContent>

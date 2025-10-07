@@ -37,7 +37,11 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
 
   const handleSignOut = () => {
-    signOut({ callbackUrl: '/' })
+    // Use the current origin when available so deployed domain is used for redirects.
+    // Falls back to NEXTAUTH_URL (if set at build/runtime) or root path.
+    const origin = typeof window !== 'undefined' ? window.location.origin : process.env.NEXTAUTH_URL || ''
+    const callbackUrl = origin ? `${origin}/` : '/'
+    signOut({ callbackUrl })
   }
 
   return (

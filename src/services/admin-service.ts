@@ -138,37 +138,115 @@ class AdminService extends BaseService {
       sessionType: string;
     }
   ): number {
+    const breakdown = this.calculateSessionPriceWithBreakdown(pricingRules, params)
+    return breakdown.finalPrice
+  }
+
+  static calculateSessionPriceWithBreakdown(
+    pricingRules: AdminPricingRule[],
+    params: {
+      materials: any[];
+      duration: number;
+      isOnline: boolean;
+      sessionType: string;
+    }
+  ): {
+    basePrice: number;
+    levelMultiplier: number;
+    levelBonus: number;
+    durationMultiplier: number;
+    locationMultiplier: number;
+    locationBonus: number;
+    subtotal: number;
+    finalPrice: number;
+    mentorShare: number;
+    mentorEarnings: number;
+    platformFee: number;
+    platformEarnings: number;
+    maxLevel: number;
+    category: string;
+  } {
     // Find active session pricing rule
     const sessionPricingRule = pricingRules.find(
       rule => rule.category === 'session_pricing' && rule.isActive
     )
 
+    const defaultBasePrice = params.duration * 2000 // Fallback: Rp 2000 per minute
+
     if (!sessionPricingRule) {
-      // Default fallback price based on duration
-      return params.duration * 2000 // Rp 2000 per minute
+      const settings = this.getSettings()
+      const finalPrice = defaultBasePrice
+      const mentorEarnings = Math.round(finalPrice * (settings.mentorFeePercentage / 100))
+      const platformEarnings = finalPrice - mentorEarnings
+
+      return {
+        basePrice: defaultBasePrice,
+        levelMultiplier: 1,
+        levelBonus: 0,
+        durationMultiplier: 1,
+        locationMultiplier: 1,
+        locationBonus: 0,
+        subtotal: defaultBasePrice,
+        finalPrice: defaultBasePrice,
+        mentorShare: settings.mentorFeePercentage,
+        mentorEarnings,
+        platformFee: settings.platformFeePercentage,
+        platformEarnings,
+        maxLevel: 1,
+        category: 'Default'
+      }
     }
 
     let basePrice = sessionPricingRule.basePrice
+    const category = sessionPricingRule.ruleName || 'Session Pricing'
 
-    // Adjust price based on material level (use highest level from materials)
+    // Calculate level multiplier (use highest level from materials)
+    let maxLevel = 1
+    let levelMultiplier = 1
     if (params.materials && params.materials.length > 0) {
-      const maxLevel = Math.max(...params.materials.map((m: any) => m.level || 1))
+      maxLevel = Math.max(...params.materials.map((m: any) => m.level || 1))
       // Add 10% per level above 1
-      const levelMultiplier = 1 + ((maxLevel - 1) * 0.1)
-      basePrice = basePrice * levelMultiplier
+      levelMultiplier = 1 + ((maxLevel - 1) * 0.1)
     }
+    const levelBonus = Math.round(basePrice * (levelMultiplier - 1))
 
-    // Adjust for duration (base price is usually for 60 minutes)
+    // Calculate duration multiplier (base price is for 60 minutes)
     const durationMultiplier = params.duration / 60
-    basePrice = basePrice * durationMultiplier
 
-    // Online sessions might have different pricing
+    // Calculate location multiplier
+    let locationMultiplier = 1
     if (!params.isOnline) {
-      // Offline sessions cost more (add 20%)
-      basePrice = basePrice * 1.2
+      locationMultiplier = 1.2 // Offline sessions cost 20% more
     }
+    const priceAfterLevel = basePrice * levelMultiplier
+    const locationBonus = Math.round(priceAfterLevel * durationMultiplier * (locationMultiplier - 1))
 
-    return Math.round(basePrice)
+    // Calculate final price
+    const subtotal = basePrice * levelMultiplier * durationMultiplier
+    const finalPrice = Math.round(subtotal * locationMultiplier)
+
+    // Calculate mentor and platform earnings
+    const mentorShare = sessionPricingRule.mentorShare
+    const mentorEarnings = Math.round(finalPrice * (mentorShare / 100))
+    const platformFee = 100 - mentorShare
+    const platformEarnings = finalPrice - mentorEarnings
+
+    return {
+      basePrice,
+      levelMultiplier,
+      levelBonus,
+      durationMultiplier,
+      locationMultiplier,
+      locationBonus,
+      subtotal: Math.round(subtotal),
+      finalPrice,
+      mentorShare,
+      mentorEarnings,
+      platformFee,
+      platformEarnings,
+      maxLevel,
+      category
+    }
   }
 
   static getSettings(): { mentorFeePercentage: number; platformFeePercentage: number } {
