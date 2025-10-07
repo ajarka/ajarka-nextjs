@@ -83,7 +83,8 @@ export const getByType = query({
 // Mutations
 export const create = mutation({
   args: {
-    recipientId: v.string(),
+    recipientId: v.optional(v.string()),
+    userId: v.optional(v.string()), // Support both recipientId and userId for backward compatibility
     recipientType: v.union(v.literal("siswa"), v.literal("mentor"), v.literal("admin")),
     senderId: v.string(),
     senderType: v.union(v.literal("siswa"), v.literal("mentor"), v.literal("admin")),
@@ -94,19 +95,39 @@ export const create = mutation({
       v.literal("booking_cancelled"),
       v.literal("meeting_link_generated"),
       v.literal("availability_updated"),
-      v.literal("availability_deleted")
+      v.literal("availability_deleted"),
+      v.literal("material_review_request"),
+      v.literal("material_approved"),
+      v.literal("material_rejected")
     ),
     title: v.string(),
     message: v.string(),
+    relatedId: v.optional(v.string()),
+    relatedType: v.optional(v.string()),
     data: v.optional(v.any()),
     read: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const now = new Date().toISOString();
 
+    // Use userId if recipientId is not provided (backward compatibility)
+    const finalRecipientId = args.recipientId || args.userId;
+    if (!finalRecipientId) {
+      throw new Error("Either recipientId or userId must be provided");
+    }
+
     const notificationId = await ctx.db.insert("notifications", {
-      ...args,
-      read: args.read ?? false,
+      userId: finalRecipientId,
+      recipientType: args.recipientType,
+      senderId: args.senderId,
+      senderType: args.senderType,
+      type: args.type,
+      title: args.title,
+      message: args.message,
+      relatedId: args.relatedId,
+      relatedType: args.relatedType,
+      data: args.data,
+      isRead: args.read ?? false,
       createdAt: now,
       updatedAt: now,
     });
@@ -207,7 +228,8 @@ export const update = mutation({
 export const createBulk = mutation({
   args: {
     notifications: v.array(v.object({
-      recipientId: v.string(),
+      recipientId: v.optional(v.string()),
+      userId: v.optional(v.string()),
       recipientType: v.union(v.literal("siswa"), v.literal("mentor"), v.literal("admin")),
       senderId: v.string(),
       senderType: v.union(v.literal("siswa"), v.literal("mentor"), v.literal("admin")),
@@ -218,10 +240,15 @@ export const createBulk = mutation({
         v.literal("booking_cancelled"),
         v.literal("meeting_link_generated"),
         v.literal("availability_updated"),
-        v.literal("availability_deleted")
+        v.literal("availability_deleted"),
+        v.literal("material_review_request"),
+        v.literal("material_approved"),
+        v.literal("material_rejected")
       ),
       title: v.string(),
       message: v.string(),
+      relatedId: v.optional(v.string()),
+      relatedType: v.optional(v.string()),
       data: v.optional(v.any()),
       read: v.optional(v.boolean()),
     }))
@@ -229,14 +256,28 @@ export const createBulk = mutation({
   handler: async (ctx, args) => {
     const now = new Date().toISOString();
 
-    const promises = args.notifications.map(notification =>
-      ctx.db.insert("notifications", {
-        ...notification,
-        read: notification.read ?? false,
+    const promises = args.notifications.map(notification => {
+      const finalRecipientId = notification.recipientId || notification.userId;
+      if (!finalRecipientId) {
+        throw new Error("Either recipientId or userId must be provided");
+      }
+
+      return ctx.db.insert("notifications", {
+        userId: finalRecipientId,
+        recipientType: notification.recipientType,
+        senderId: notification.senderId,
+        senderType: notification.senderType,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        relatedId: notification.relatedId,
+        relatedType: notification.relatedType,
+        data: notification.data,
+        isRead: notification.read ?? false,
         createdAt: now,
         updatedAt: now,
-      })
-    );
+      });
+    });
 
     const notificationIds = await Promise.all(promises);
     return notificationIds;

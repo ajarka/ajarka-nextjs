@@ -40,27 +40,27 @@ export default function MentorScheduleDialog({
 }: MentorScheduleDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-6xl w-[95vw] sm:!max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader className="flex-shrink-0 pb-4 border-b">
           <DialogTitle className="text-xl font-bold">Buat Jadwal Mentoring Baru</DialogTitle>
           <DialogDescription className="text-gray-600">
             Atur detail jadwal mentoring yang akan tersedia untuk booking siswa
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="flex-1 overflow-hidden">
           <Tabs defaultValue="basic" className="w-full h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-4 flex-shrink-0">
-              <TabsTrigger value="basic" className="text-sm">
+            <TabsList className="grid w-full grid-cols-4 flex-shrink-0 gap-2 h-auto p-1">
+              <TabsTrigger value="basic" className="text-sm py-2.5 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 📋 Basic Info
               </TabsTrigger>
-              <TabsTrigger value="materials" className="text-sm">
+              <TabsTrigger value="materials" className="text-sm py-2.5 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 📚 Materials
               </TabsTrigger>
-              <TabsTrigger value="levels" className="text-sm">
+              <TabsTrigger value="levels" className="text-sm py-2.5 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 🎯 Level Settings
               </TabsTrigger>
-              <TabsTrigger value="meeting" className="text-sm">
+              <TabsTrigger value="meeting" className="text-sm py-2.5 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 💻 Meeting Setup
               </TabsTrigger>
             </TabsList>

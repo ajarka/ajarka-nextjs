@@ -41,6 +41,8 @@ export default function MentorMaterialsPage() {
   const updateMaterial = MaterialContentService.useUpdateMaterial()
   const submitForReview = MaterialContentService.useSubmitForReview()
   const createNotification = useMutation(api.notifications.create)
+  const createBulkNotifications = useMutation(api.notifications.createBulk)
+  const adminUsers = MaterialContentService.useAdminUsers() || []
 
   const [showDialog, setShowDialog] = useState(false)
   const [viewingMaterial, setViewingMaterial] = useState<any>(null)
@@ -99,18 +101,22 @@ export default function MentorMaterialsPage() {
     try {
       await submitForReview({ id: materialId as any })
 
-      // Create notification for admin
-      await createNotification({
-        userId: 'admin', // This should be actual admin IDs
-        type: 'material_review_request',
-        title: 'New Material Review Request',
-        message: `${session?.user?.name || 'A mentor'} has submitted "${materialTitle}" for review`,
-        relatedId: materialId,
-        relatedType: 'material',
-        recipientType: 'admin',
-        senderId: userId,
-        senderType: 'mentor',
-      })
+      // Create notifications for all admins
+      if (adminUsers && adminUsers.length > 0) {
+        const notifications = adminUsers.map(admin => ({
+          userId: admin._id,
+          type: 'material_review_request' as const,
+          title: 'New Material Review Request',
+          message: `${session?.user?.name || 'A mentor'} has submitted "${materialTitle}" for review`,
+          relatedId: materialId,
+          relatedType: 'material',
+          recipientType: 'admin' as const,
+          senderId: userId,
+          senderType: 'mentor' as const,
+        }))
+
+        await createBulkNotifications({ notifications })
+      }
 
       alert('Material submitted for review successfully!')
     } catch (error) {

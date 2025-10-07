@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 import {
   Plus,
   Edit,
@@ -18,7 +20,10 @@ import {
   AlertTriangle,
   FileCheck,
   Maximize2,
-  Minimize2
+  Minimize2,
+  ThumbsUp,
+  ThumbsDown,
+  MessageSquare
 } from "lucide-react"
 import { MaterialContentService } from '@/services/material-content-service'
 import { useSession } from 'next-auth/react'
@@ -32,10 +37,16 @@ export default function MaterialsManagement() {
   const updateMaterial = MaterialContentService.useUpdateMaterial()
   const deleteMaterial = MaterialContentService.useDeleteMaterial()
   const toggleActive = MaterialContentService.useToggleActive()
+  const approveMaterial = MaterialContentService.useApproveMaterial()
+  const rejectMaterial = MaterialContentService.useRejectMaterial()
+  const requestRevision = MaterialContentService.useRequestRevision()
 
   const [showDialog, setShowDialog] = useState(false)
   const [viewingMaterial, setViewingMaterial] = useState<any>(null)
   const [editingMaterial, setEditingMaterial] = useState<any>(null)
+  const [reviewingMaterial, setReviewingMaterial] = useState<any>(null)
+  const [reviewNotes, setReviewNotes] = useState('')
+  const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | 'revision' | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [filter, setFilter] = useState<'all' | 'published' | 'draft' | 'pending'>('all')
@@ -101,6 +112,45 @@ export default function MaterialsManagement() {
     } catch (error) {
       console.error('Error toggling material status:', error)
     }
+  }
+
+  const handleReviewAction = async () => {
+    if (!reviewingMaterial || !reviewAction) return
+
+    setIsSubmitting(true)
+    try {
+      const reviewData = {
+        id: reviewingMaterial._id,
+        reviewerId: session?.user?.id || '',
+        notes: reviewNotes
+      }
+
+      if (reviewAction === 'approve') {
+        await approveMaterial(reviewData)
+        alert('Material approved successfully!')
+      } else if (reviewAction === 'reject') {
+        await rejectMaterial(reviewData)
+        alert('Material rejected!')
+      } else if (reviewAction === 'revision') {
+        await requestRevision(reviewData)
+        alert('Revision requested!')
+      }
+
+      setReviewingMaterial(null)
+      setReviewNotes('')
+      setReviewAction(null)
+    } catch (error) {
+      console.error('Error processing review:', error)
+      alert('Failed to process review')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const openReviewDialog = (material: any) => {
+    setReviewingMaterial(material)
+    setReviewNotes(material.reviewNotes || '')
+    setReviewAction(null)
   }
 
   const openCreateDialog = () => {
@@ -306,6 +356,17 @@ export default function MaterialsManagement() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
+                        {material.status === 'pending_review' && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => openReviewDialog(material)}
+                            className="bg-orange-600 hover:bg-orange-700"
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Review
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
@@ -402,6 +463,118 @@ export default function MaterialsManagement() {
               isSubmitting={isSubmitting}
               mode={editingMaterial ? 'edit' : 'create'}
             />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Review Dialog */}
+      <Dialog open={reviewingMaterial !== null} onOpenChange={() => {
+        setReviewingMaterial(null)
+        setReviewNotes('')
+        setReviewAction(null)
+      }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Review Material</DialogTitle>
+            <DialogDescription>
+              Review and provide feedback for "{reviewingMaterial?.title}"
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Material Preview */}
+            {reviewingMaterial && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Material Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div><strong>Category:</strong> {reviewingMaterial.category}</div>
+                  <div><strong>Level:</strong> {reviewingMaterial.level}</div>
+                  <div><strong>Difficulty:</strong> {reviewingMaterial.difficulty}</div>
+                  <div><strong>Estimated Hours:</strong> {reviewingMaterial.estimatedHours}h</div>
+                  <div><strong>Author:</strong> {reviewingMaterial.authorRole}</div>
+                  <div className="pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setViewingMaterial(reviewingMaterial)
+                        setReviewingMaterial(null)
+                      }}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Full Content
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Review Notes/Comments */}
+            <div className="space-y-2">
+              <Label htmlFor="reviewNotes">Review Notes / Feedback *</Label>
+              <Textarea
+                id="reviewNotes"
+                value={reviewNotes}
+                onChange={(e) => setReviewNotes(e.target.value)}
+                placeholder="Provide detailed feedback, comments, or suggestions for improvement..."
+                rows={6}
+                className="resize-none"
+              />
+              <p className="text-sm text-muted-foreground">
+                Your feedback will be sent to the mentor who created this material.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
+              <Button
+                variant="outline"
+                className={`flex-1 ${reviewAction === 'approve' ? 'border-green-600 bg-green-50' : ''}`}
+                onClick={() => setReviewAction('approve')}
+              >
+                <ThumbsUp className="h-4 w-4 mr-2" />
+                Approve & Publish
+              </Button>
+              <Button
+                variant="outline"
+                className={`flex-1 ${reviewAction === 'revision' ? 'border-orange-600 bg-orange-50' : ''}`}
+                onClick={() => setReviewAction('revision')}
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Request Changes
+              </Button>
+              <Button
+                variant="outline"
+                className={`flex-1 ${reviewAction === 'reject' ? 'border-red-600 bg-red-50' : ''}`}
+                onClick={() => setReviewAction('reject')}
+              >
+                <ThumbsDown className="h-4 w-4 mr-2" />
+                Reject
+              </Button>
+            </div>
+
+            {/* Submit Review */}
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setReviewingMaterial(null)
+                  setReviewNotes('')
+                  setReviewAction(null)
+                }}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleReviewAction}
+                disabled={!reviewAction || !reviewNotes.trim() || isSubmitting}
+              >
+                {isSubmitting ? 'Processing...' : 'Submit Review'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

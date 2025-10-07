@@ -129,6 +129,57 @@ class AdminService extends BaseService {
     return studentPrice - mentorFee
   }
 
+  static calculateSessionPrice(
+    pricingRules: AdminPricingRule[],
+    params: {
+      materials: any[];
+      duration: number;
+      isOnline: boolean;
+      sessionType: string;
+    }
+  ): number {
+    // Find active session pricing rule
+    const sessionPricingRule = pricingRules.find(
+      rule => rule.category === 'session_pricing' && rule.isActive
+    )
+
+    if (!sessionPricingRule) {
+      // Default fallback price based on duration
+      return params.duration * 2000 // Rp 2000 per minute
+    }
+
+    let basePrice = sessionPricingRule.basePrice
+
+    // Adjust price based on material level (use highest level from materials)
+    if (params.materials && params.materials.length > 0) {
+      const maxLevel = Math.max(...params.materials.map((m: any) => m.level || 1))
+      // Add 10% per level above 1
+      const levelMultiplier = 1 + ((maxLevel - 1) * 0.1)
+      basePrice = basePrice * levelMultiplier
+    }
+
+    // Adjust for duration (base price is usually for 60 minutes)
+    const durationMultiplier = params.duration / 60
+    basePrice = basePrice * durationMultiplier
+
+    // Online sessions might have different pricing
+    if (!params.isOnline) {
+      // Offline sessions cost more (add 20%)
+      basePrice = basePrice * 1.2
+    }
+
+    return Math.round(basePrice)
+  }
+
+  static getSettings(): { mentorFeePercentage: number; platformFeePercentage: number } {
+    // Return default settings
+    // In a real implementation, this would fetch from adminSettings table
+    return {
+      mentorFeePercentage: 70, // Mentor gets 70% of student price
+      platformFeePercentage: 30 // Platform gets 30%
+    }
+  }
+
   static formatCurrency(amount: number): string {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',

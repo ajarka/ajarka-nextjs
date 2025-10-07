@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Users, BookOpen, DollarSign, Star, MessageCircle, Calendar } from 'lucide-react'
+import { Users, BookOpen, DollarSign, Star, MessageCircle, Calendar, FileText } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 
@@ -295,6 +295,12 @@ export function MentorDashboard() {
           <CardContent className="space-y-3">
             <Button className="w-full" variant="outline" asChild>
               <Link href="/dashboard/akun">Update Profil</Link>
+            </Button>
+            <Button className="w-full" variant="outline" asChild>
+              <Link href="/dashboard/mentor/materials" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Kelola Materi
+              </Link>
             </Button>
             <Button className="w-full" variant="outline" asChild>
               <Link href="/dashboard/transaksi">Lihat Transaksi</Link>

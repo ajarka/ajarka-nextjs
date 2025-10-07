@@ -106,6 +106,10 @@ export class MaterialContentService extends BaseService {
     return this.useMutation<Id<"materialContents">>('materialContents.toggleActive');
   }
 
+  static useAdminUsers() {
+    return this.useQuery<any[]>('users.getByRole', { role: 'admin' });
+  }
+
   // Async methods for server-side/non-React usage
   static async getAllMaterials(): Promise<MaterialContent[]> {
     try {
